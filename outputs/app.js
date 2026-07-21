@@ -76,7 +76,7 @@
   function selectionHref(target, ids, focusId = readFocus(ids)) {
     const params = new URLSearchParams();
     if (focusId && labById.has(focusId)) params.set('focus', focusId);
-    if (target.includes('space.html') && page === 'space') {
+    if (target === 'index.html' && page === 'space') {
       const current = new URLSearchParams(window.location.search);
       ['x', 'y'].forEach(key => {
         if (current.has(key)) params.set(key, current.get(key));
@@ -270,9 +270,13 @@
     const stage = document.querySelector('#architecture-stage');
     const detail = document.querySelector('#architecture-detail');
     const detailClose = document.querySelector('#architecture-detail-close');
+    const xAxisOverlay = document.querySelector('#space-x-axis-overlay');
     const axisSelects = { x: null, y: null };
     const axisTooltip = createDelayedTooltip();
     const starLegend = document.querySelector('.star-legend');
+    const spaceHeader = document.querySelector('body[data-page="space"] .site-header');
+    const spaceLastUpdated = document.querySelector('.space-last-updated');
+    const spaceChromeParts = [spaceHeader, starLegend, spaceLastUpdated].filter(Boolean);
     const initialFocus = readFocus(ids);
     let selectedId = labs.some(lab => lab.id === initialFocus) ? initialFocus : labs[0].id;
     let axisConfig = { x: 'readiness', y: 'capability' };
@@ -289,10 +293,15 @@
     let activeClusters = new Map();
     let detailFrame = null;
     let currentPositions = new Map();
+    let backgroundFar = null;
+    let backgroundNear = null;
+    let chromeHideTimer = null;
+    let lastPointerY = Number.POSITIVE_INFINITY;
     const starGroups = new Map();
     const starRadii = new Map();
     let clusterIndicators = null;
     const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const precisePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const legacyViews = {
       market: { x: 'readiness', y: 'capability' },
       learning: { x: 'adaptivity', y: 'dataEfficiency' },
@@ -310,7 +319,7 @@
       metricKeys.forEach(key => {
         const option = document.createElement('option');
         option.value = key;
-        option.textContent = `${architectureMetrics[key].label} · 0–3`;
+        option.textContent = architectureMetrics[key].label;
         select.appendChild(option);
       });
       select.value = axisConfig[axis];
@@ -343,6 +352,51 @@
     window.addEventListener('keydown', event => {
       if (event.key !== 'Escape' || !detailOpen) return;
       closeDetail();
+    });
+
+    function clearChromeHide() {
+      if (!chromeHideTimer) return;
+      window.clearTimeout(chromeHideTimer);
+      chromeHideTimer = null;
+    }
+
+    function chromeIsActive() {
+      return spaceChromeParts.some(part => part.matches(':hover') || part.contains(document.activeElement));
+    }
+
+    function revealChrome() {
+      clearChromeHide();
+      document.body.classList.add('space-chrome-visible');
+    }
+
+    function scheduleChromeHide(delay = 500) {
+      if (!precisePointer) return;
+      clearChromeHide();
+      chromeHideTimer = window.setTimeout(() => {
+        chromeHideTimer = null;
+        if (lastPointerY <= 110 || chromeIsActive()) return;
+        document.body.classList.remove('space-chrome-visible');
+      }, delay);
+    }
+
+    if (!precisePointer) document.body.classList.add('space-chrome-visible');
+    spaceChromeParts.forEach(part => {
+      part.addEventListener('pointerenter', revealChrome);
+      part.addEventListener('pointerleave', () => scheduleChromeHide(500));
+      part.addEventListener('focusin', revealChrome);
+      part.addEventListener('focusout', () => scheduleChromeHide(500));
+    });
+    window.addEventListener('pointermove', event => {
+      lastPointerY = event.clientY;
+      if (event.clientY <= 110) revealChrome();
+      else if (document.body.classList.contains('space-chrome-visible') && !chromeIsActive()) scheduleChromeHide();
+    }, { passive: true });
+    window.addEventListener('pointerleave', () => {
+      lastPointerY = Number.POSITIVE_INFINITY;
+      scheduleChromeHide(500);
+    });
+    window.addEventListener('keydown', event => {
+      if (event.key === 'Tab') revealChrome();
     });
 
     function normalizeAxisConfig(config, changedAxis = 'x') {
@@ -435,8 +489,8 @@
     }
 
     function axialPlotBounds() {
-      const horizontalMargin = width * .2;
-      const verticalMargin = height * .2;
+      const horizontalMargin = Math.max(width * .1, 42);
+      const verticalMargin = Math.max(height * .12, 80);
       return {
         left: horizontalMargin,
         right: horizontalMargin,
@@ -487,9 +541,29 @@
       const orbitRadius = Math.max(28, spacing / (2 * Math.sin(Math.PI / cluster.ids.length)));
       const margin = orbitRadius + collisionRadius + 10;
       const center = {
-        x: Math.max(margin, Math.min(width - margin, base.x)),
-        y: Math.max(margin, Math.min(height - margin, base.y))
+        x: base.x,
+        y: base.y
       };
+      const barycentricSystem = cluster.ids.length > 1;
+      const orbitalBodies = new Map();
+      if (barycentricSystem) {
+        const orderedIds = cluster.ids.slice().sort((a, b) => compareLabsByFormation(labById.get(a), labById.get(b)));
+        let previousRadius = 0;
+        let previousStarRadius = 0;
+        orderedIds.forEach((peerId, index) => {
+          const starRadius = starRadii.get(peerId) || collisionRadius;
+          const orbitRadius = index === 0
+            ? Math.max(12, starRadius * .5)
+            : previousRadius + previousStarRadius + starRadius + Math.max(3, Math.min(previousStarRadius, starRadius) * .5);
+          orbitalBodies.set(peerId, {
+            angle: (hash(cluster.key) % 360) * Math.PI / 180 + index * Math.PI * 2 / orderedIds.length,
+            radius: orbitRadius,
+            angularSpeed: .3 / Math.sqrt(Math.max(1, orbitRadius / 38))
+          });
+          previousRadius = orbitRadius;
+          previousStarRadius = starRadius;
+        });
+      }
       const particles = new Map();
       cluster.ids.forEach((peerId, index) => {
         const angle = index * Math.PI * 2 / cluster.ids.length + (hash(cluster.key) % 360) * Math.PI / 180;
@@ -510,6 +584,8 @@
         ...cluster,
         base,
         center,
+        barycentricSystem,
+        orbitalBodies,
         particles,
         orbitRadius,
         started: now,
@@ -531,8 +607,14 @@
       clusterIndicators.replaceChildren();
       activeClusters.forEach(cluster => {
         const orbit = svgEl('g', { class: `cluster-orbit${cluster.frozen ? ' is-frozen' : ''}`, 'aria-hidden': 'true' });
-        orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: cluster.orbitRadius, class: 'cluster-orbit-ring' }));
-        orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: cluster.orbitRadius, class: 'cluster-orbit-sweep' }));
+        if (cluster.barycentricSystem) {
+          cluster.orbitalBodies.forEach(body => {
+            orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: body.radius, class: 'cluster-orbit-ring' }));
+          });
+        } else {
+          orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: cluster.orbitRadius, class: 'cluster-orbit-ring' }));
+          orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: cluster.orbitRadius, class: 'cluster-orbit-sweep' }));
+        }
         cluster.indicator = orbit;
         clusterIndicators.appendChild(orbit);
       });
@@ -549,6 +631,18 @@
 
       if (reducedMotion) {
         activeClusters.forEach(cluster => {
+          if (cluster.barycentricSystem) {
+            cluster.orbitalBodies.forEach((body, peerId) => {
+              const position = {
+                x: cluster.center.x + Math.cos(body.angle) * body.radius,
+                y: cluster.center.y + Math.sin(body.angle) * body.radius
+              };
+              currentPositions.set(peerId, position);
+              starGroups.get(peerId)?.setAttribute('transform', `translate(${position.x} ${position.y})`);
+            });
+            cluster.phase = 'orbiting';
+            return;
+          }
           cluster.ids.forEach(peerId => {
             const particle = cluster.particles.get(peerId);
             const position = {
@@ -584,6 +678,24 @@
       const elapsed = now - activeCluster.started;
       const expansion = Math.min(1, elapsed / 820);
       const easedExpansion = 1 - Math.pow(1 - expansion, 3);
+      if (activeCluster.barycentricSystem) {
+        const centerProgress = easedExpansion;
+        const dynamicCenter = {
+          x: activeCluster.base.x + (activeCluster.center.x - activeCluster.base.x) * centerProgress,
+          y: activeCluster.base.y + (activeCluster.center.y - activeCluster.base.y) * centerProgress
+        };
+        activeCluster.orbitalBodies.forEach((body, id) => {
+          body.angle += body.angularSpeed * dt;
+          const position = {
+            x: dynamicCenter.x + Math.cos(body.angle) * body.radius * easedExpansion,
+            y: dynamicCenter.y + Math.sin(body.angle) * body.radius * easedExpansion
+          };
+          currentPositions.set(id, position);
+          starGroups.get(id)?.setAttribute('transform', `translate(${position.x} ${position.y})`);
+        });
+        if (expansion >= 1) activeCluster.phase = 'orbiting';
+        return;
+      }
       const desiredRadius = activeCluster.orbitRadius * easedExpansion;
       const centerProgress = easedExpansion;
       const dynamicCenter = {
@@ -684,7 +796,7 @@
     function buildScene() {
       stopClusterMotion(false);
       width = Math.max(320, Math.round(stage.getBoundingClientRect().width || 1000));
-      height = width < 700 ? 560 : Math.max(580, Math.min(740, window.innerHeight * 0.68));
+      height = Math.max(320, Math.round(stage.getBoundingClientRect().height || window.innerHeight || 700));
       svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
       svg.setAttribute('height', height);
       svg.setAttribute('aria-label', 'All neolabs shown as a drifting architecture constellation');
@@ -693,6 +805,7 @@
       starRadii.clear();
       axisSelects.x = null;
       axisSelects.y = null;
+      xAxisOverlay.replaceChildren();
 
       const defs = svgEl('defs');
       const gas = svgEl('filter', { id: 'star-gas', x: '-100%', y: '-100%', width: '300%', height: '300%' });
@@ -706,35 +819,49 @@
       svg.appendChild(defs);
 
       const initialPositions = positionsFor(axisConfig);
-      const backgroundStars = svgEl('g', { class: 'background-stars', 'aria-hidden': 'true' });
-      for (let index = 0; index < 84; index += 1) {
+      const safeLeft = Math.max(width * .1, 42);
+      const safeRight = width - safeLeft;
+      const safeTop = Math.max(height * .12, 80);
+      const safeBottom = height - safeTop;
+      backgroundFar = svgEl('g', { class: 'background-stars background-stars-far', 'aria-hidden': 'true' });
+      backgroundNear = svgEl('g', { class: 'background-stars background-stars-near', 'aria-hidden': 'true' });
+      const backgroundStarCount = Math.max(84, Math.min(180, Math.round(width * height / 12000)));
+      for (let index = 0; index < backgroundStarCount; index += 1) {
         let x; let y; let attempts = 0;
         do {
-          x = Math.random() * width;
-          y = Math.random() * height;
+          x = safeLeft + Math.random() * (safeRight - safeLeft);
+          y = safeTop + Math.random() * (safeBottom - safeTop);
           attempts += 1;
         } while (attempts < 6 && [...initialPositions.values()].some(position => Math.hypot(position.x - x, position.y - y) < 42));
-        backgroundStars.appendChild(svgEl('circle', {
+        const opacity = 0.07 + Math.random() * 0.2;
+        const star = svgEl('circle', {
           cx: x,
           cy: y,
-          r: 0.3 + Math.random() * 0.75,
-          opacity: 0.07 + Math.random() * 0.2,
-          class: 'background-star'
-        }));
+          r: 0.3 + Math.random() * (index % 4 === 0 ? 1.05 : 0.65),
+          opacity,
+          class: `background-star${reducedMotion ? '' : ' is-twinkling'}`,
+          style: `--star-opacity:${opacity};--twinkle-duration:${3.5 + Math.random() * 5}s;--twinkle-delay:${-Math.random() * 6}s`
+        });
+        (index % 4 === 0 ? backgroundNear : backgroundFar).appendChild(star);
       }
-      svg.appendChild(backgroundStars);
+      svg.append(backgroundFar, backgroundNear);
 
       clusterIndicators = svgEl('g', { class: 'cluster-orbits', 'aria-hidden': 'true' });
       svg.appendChild(clusterIndicators);
 
-      const xAxis = svgEl('g', { class: 'axis-guide axis-guide-x' });
-      axisTooltip.bind(xAxis, () => architectureMetrics[axisConfig.x].description);
-      xAxis.appendChild(axisSelectControl('x', { x: width / 2 - 110, y: height - 79, width: 220, height: 42 }));
-      svg.appendChild(xAxis);
+      const xAxis = document.createElement('label');
+      xAxis.className = 'space-x-axis-control';
+      const xSelect = document.createElement('select');
+      xSelect.className = 'axis-select';
+      xSelect.setAttribute('aria-label', 'X axis metric; scale 0 none to 3 high');
+      xAxis.appendChild(xSelect);
+      xAxisOverlay.appendChild(xAxis);
+      axisTooltip.bind(xAxisOverlay, () => architectureMetrics[axisConfig.x].description);
+      bindAxisSelect('x', xSelect);
 
-      const yAxis = svgEl('g', { class: 'axis-guide axis-guide-y', transform: `translate(55 ${height / 2}) rotate(-90)` });
+      const yAxis = svgEl('g', { class: 'axis-guide axis-guide-y', transform: `translate(${width / 2 - 110} ${height * .9 - 83})` });
       axisTooltip.bind(yAxis, () => architectureMetrics[axisConfig.y].description);
-      yAxis.appendChild(axisSelectControl('y', { x: -110, y: -54, width: 220, height: 42 }));
+      yAxis.appendChild(axisSelectControl('y', { x: 0, y: 0, width: 220, height: 42 }));
       svg.appendChild(yAxis);
 
       labs.forEach((lab, index) => {
@@ -752,7 +879,16 @@
         drift.appendChild(svgEl('circle', { r: haloRadius, class: 'star-halo' }));
         drift.appendChild(svgEl('circle', { r: radius, class: 'star-core' }));
         drift.appendChild(svgEl('circle', { r: radius + 5, class: 'star-selection-ring' }));
-        const label = svgEl('text', { x: 0, y: -(radius + 12), 'text-anchor': 'middle', class: 'star-label' });
+        const initialPoint = initialPositions.get(lab.id);
+        const edgeThreshold = width < 700 ? .38 : .18;
+        const labelAtLeftEdge = initialPoint.x > width * (1 - edgeThreshold);
+        const labelAtRightEdge = initialPoint.x < width * edgeThreshold;
+        const label = svgEl('text', {
+          x: labelAtLeftEdge ? -(radius + 12) : labelAtRightEdge ? radius + 12 : 0,
+          y: -(radius + 12),
+          'text-anchor': labelAtLeftEdge ? 'end' : labelAtRightEdge ? 'start' : 'middle',
+          class: 'star-label'
+        });
         label.textContent = lab.name;
         drift.appendChild(label);
         outer.appendChild(drift);
@@ -945,8 +1081,16 @@
       const pointY = pointRect.top - stageRect.top + pointRect.height / 2;
       const placeRight = pointX + detailRect.width + 36 < stageRect.width;
       const left = placeRight ? pointX + 24 : pointX - detailRect.width - 24;
+      const chromeVisible = document.body.classList.contains('space-chrome-visible');
+      const headerBottom = chromeVisible ? (spaceHeader?.getBoundingClientRect().bottom || stageRect.top) - stageRect.top + 10 : 12;
+      const footerTops = chromeVisible
+        ? [starLegend, spaceLastUpdated].filter(Boolean).map(part => part.getBoundingClientRect().top - stageRect.top - 10)
+        : [];
+      const footerTop = footerTops.length ? Math.min(...footerTops) : stageRect.height - 12;
+      const maxTop = Math.max(12, footerTop - detailRect.height);
+      const minTop = Math.min(Math.max(12, headerBottom), maxTop);
       detail.style.left = `${Math.max(12, Math.min(stageRect.width - detailRect.width - 12, left))}px`;
-      detail.style.top = `${Math.max(12, Math.min(stageRect.height - detailRect.height - 12, pointY - detailRect.height * 0.36))}px`;
+      detail.style.top = `${Math.max(minTop, Math.min(maxTop, pointY - detailRect.height * 0.36))}px`;
     }
 
     function trackDetail() {

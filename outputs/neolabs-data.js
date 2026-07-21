@@ -182,7 +182,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "The lab is associated with frontier-scale compute needs and offers no public efficiency evidence."
         },
         "adaptivity": {
-          "score": 0,
+          "score": 1,
           "rationale": "The method is undisclosed and no adaptive system is publicly demonstrated."
         },
         "controllability": {
