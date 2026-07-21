@@ -1,23 +1,6 @@
 window.NEOLABS_DATA = Object.freeze({
   "version": "2026-07-20",
-  "schemaVersion": "2.4.0",
   "schema": {
-    "currency": "USD",
-    "moneyUnit": "nominal dollars",
-    "disclosureConfidenceScale": {
-      "1": "limited",
-      "2": "moderate",
-      "3": "high"
-    },
-    "analysisScoreScale": {
-      "0": "none / NA",
-      "1": "low",
-      "2": "mid",
-      "3": "high",
-      "methodology": "Scores are analyst judgments: demonstrated evidence is preferred, stated theses are used for pre-product labs, and source ranges or unknowns are rounded or mapped to the nearest integer.",
-      "scoreField": "scores",
-      "scoreDescription": "Each lab stores every axis score as a { score, rationale } object under scores."
-    },
     "analysisAxes": {
       "readiness": {
         "label": "Market readiness",
@@ -55,18 +38,13 @@ window.NEOLABS_DATA = Object.freeze({
         "high": "High",
         "hoverText": "How easily people can interpret and steer system behavior."
       }
-    },
-    "citationGraph": {
-      "sourceRegistry": "sources",
-      "insightRegistry": "insights",
-      "edgeList": "evidenceLinks",
-      "description": "Sources and distilled insights are stored once. evidenceLinks forms the many-to-many bipartite association; insight.field points to the canonical lab field or funding record."
     }
   },
   "labs": [
     {
       "id": "thinking",
       "name": "Thinking Machines Lab",
+      "shortName": "Thinking Machines",
       "code": "TM",
       "formation": {
         "year": 2025,
@@ -121,14 +99,6 @@ window.NEOLABS_DATA = Object.freeze({
         "customizable models"
       ],
       "noteInsightId": "thinking.thesis",
-      "path": [
-        "d2",
-        "d3",
-        "a8",
-        "l2",
-        "p2",
-        "p4"
-      ],
       "keyPeople": [
         {
           "name": "Mira Murati",
@@ -160,6 +130,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "ssi",
       "name": "SSI (Safe Superintelligence)",
+      "shortName": "SSI",
       "code": "SSI",
       "formation": {
         "year": 2024,
@@ -224,14 +195,6 @@ window.NEOLABS_DATA = Object.freeze({
         "safe superintelligence"
       ],
       "noteInsightId": "ssi.thesis",
-      "path": [
-        "d1",
-        "a1",
-        "l1",
-        "l5",
-        "p1",
-        "p2"
-      ],
       "keyPeople": [
         {
           "name": "Ilya Sutskever",
@@ -255,6 +218,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "ineffable",
       "name": "Ineffable Intelligence",
+      "shortName": "Ineffable",
       "code": "INE",
       "formation": {
         "year": 2025,
@@ -309,13 +273,6 @@ window.NEOLABS_DATA = Object.freeze({
         "reinforcement learning"
       ],
       "noteInsightId": "ineffable.thesis",
-      "path": [
-        "d3",
-        "a7",
-        "l3",
-        "l5",
-        "p2"
-      ],
       "keyPeople": [
         {
           "name": "David Silver",
@@ -331,6 +288,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "recursive",
       "name": "Recursive Superintelligence",
+      "shortName": "RSI",
       "code": "RSI",
       "formation": {
         "year": 2025,
@@ -385,13 +343,6 @@ window.NEOLABS_DATA = Object.freeze({
         "recursive self-improvement"
       ],
       "noteInsightId": "recursive.thesis",
-      "path": [
-        "d2",
-        "d5",
-        "a7",
-        "l5",
-        "p2"
-      ],
       "keyPeople": [
         {
           "name": "Richard Socher",
@@ -431,6 +382,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "sakana",
       "name": "Sakana AI",
+      "shortName": "Sakana",
       "code": "SAK",
       "formation": {
         "year": 2023,
@@ -495,15 +447,6 @@ window.NEOLABS_DATA = Object.freeze({
         "evolutionary AI"
       ],
       "noteInsightId": "sakana.thesis",
-      "path": [
-        "d3",
-        "d5",
-        "a2",
-        "a7",
-        "l5",
-        "p2",
-        "p3"
-      ],
       "keyPeople": [
         {
           "name": "David Ha",
@@ -535,6 +478,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "liquid",
       "name": "Liquid AI",
+      "shortName": "Liquid",
       "code": "LIQ",
       "formation": {
         "year": 2023,
@@ -599,13 +543,6 @@ window.NEOLABS_DATA = Object.freeze({
         "liquid neural net"
       ],
       "noteInsightId": "liquid.thesis",
-      "path": [
-        "d3",
-        "a2",
-        "l1",
-        "p1",
-        "p4"
-      ],
       "keyPeople": [
         {
           "name": "Ramin Hasani",
@@ -645,6 +582,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "ndea",
       "name": "Ndea",
+      "shortName": "Ndea",
       "code": "NDE",
       "formation": {
         "year": 2024,
@@ -699,14 +637,6 @@ window.NEOLABS_DATA = Object.freeze({
         "program synthesis"
       ],
       "noteInsightId": "ndea.thesis",
-      "path": [
-        "d3",
-        "a3",
-        "l4",
-        "l5",
-        "p2",
-        "p3"
-      ],
       "keyPeople": [
         {
           "name": "François Chollet",
@@ -730,6 +660,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "ami",
       "name": "AMI Labs",
+      "shortName": "AMI",
       "code": "AMI",
       "formation": {
         "year": 2025,
@@ -784,15 +715,6 @@ window.NEOLABS_DATA = Object.freeze({
         "world models"
       ],
       "noteInsightId": "ami.thesis",
-      "path": [
-        "d4",
-        "d5",
-        "a4",
-        "l3",
-        "l4",
-        "p5",
-        "p6"
-      ],
       "keyPeople": [
         {
           "name": "Yann LeCun",
@@ -816,6 +738,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "worldlabs",
       "name": "World Labs",
+      "shortName": "World Labs",
       "code": "WL",
       "formation": {
         "year": 2024,
@@ -880,14 +803,6 @@ window.NEOLABS_DATA = Object.freeze({
         "spatial intelligence"
       ],
       "noteInsightId": "worldlabs.thesis",
-      "path": [
-        "d4",
-        "d5",
-        "a4",
-        "l1",
-        "l3",
-        "p5"
-      ],
       "keyPeople": [
         {
           "name": "Fei-Fei Li",
@@ -927,6 +842,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "inception",
       "name": "Inception Labs",
+      "shortName": "Inception",
       "code": "INC",
       "formation": {
         "year": 2024,
@@ -981,14 +897,6 @@ window.NEOLABS_DATA = Object.freeze({
         "diffusion language models"
       ],
       "noteInsightId": "inception.thesis",
-      "path": [
-        "d1",
-        "d2",
-        "a2",
-        "l1",
-        "p1",
-        "p2"
-      ],
       "keyPeople": [
         {
           "name": "Stefano Ermon",
@@ -1020,6 +928,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "openai",
       "name": "OpenAI",
+      "shortName": "OpenAI",
       "code": "OAI",
       "formation": {
         "year": 2015,
@@ -1104,14 +1013,6 @@ window.NEOLABS_DATA = Object.freeze({
         "transformer-scaling"
       ],
       "noteInsightId": "openai.thesis",
-      "path": [
-        "d1",
-        "d2",
-        "a1",
-        "l1",
-        "p1",
-        "p2"
-      ],
       "keyPeople": [
         {
           "name": "Sam Altman",
@@ -1135,6 +1036,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "anthropic",
       "name": "Anthropic",
+      "shortName": "Anthropic",
       "code": "ANT",
       "formation": {
         "year": 2021,
@@ -1239,14 +1141,6 @@ window.NEOLABS_DATA = Object.freeze({
         "safety-centric transformer-scaling"
       ],
       "noteInsightId": "anthropic.thesis",
-      "path": [
-        "d1",
-        "d2",
-        "a1",
-        "l1",
-        "p1",
-        "p2"
-      ],
       "keyPeople": [
         {
           "name": "Dario Amodei",

@@ -15,6 +15,7 @@
 
   const allLabs = dataset.labs.slice().sort(compareLabsByFormation);
   const labById = new Map(allLabs.map(lab => [lab.id, lab]));
+  const shortLabName = lab => lab.shortName || lab.name;
   const focusStorageKey = 'neolab-active-lab-v1';
   const page = document.body.dataset.page;
   const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -1047,7 +1048,7 @@
       swatch.className = 'radar-swatch';
       swatch.setAttribute('aria-hidden', 'true');
       const name = document.createElement('span');
-      name.textContent = lab.name;
+      name.textContent = shortLabName(lab);
       button.append(swatch, name);
       button.addEventListener('click', event => {
         event.stopPropagation();
@@ -1062,7 +1063,7 @@
       const linkSwatch = swatch.cloneNode(true);
       const linkName = document.createElement('span');
       linkName.className = 'radar-name-website-text';
-      linkName.textContent = lab.name;
+      linkName.textContent = shortLabName(lab);
       website.append(linkSwatch, linkName);
       const arrow = document.createElement('span');
       arrow.className = 'radar-name-website-arrow';
@@ -1401,315 +1402,318 @@
     const labs = selectedLabs(ids);
     updateViewLinks(ids);
     const svg = document.querySelector('#web-svg');
-    const select = document.querySelector('#web-focus');
-    const showUnmappedToggle = document.querySelector('#web-show-unmapped');
+    const legend = document.querySelector('#web-legend');
+    const panel = document.querySelector('#web-panel');
     const graph = window.TECH_WEB_DATA;
-    if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
+    if (!graph || !Array.isArray(graph.layers) || !Array.isArray(graph.nodes) || !graph.labEdges) {
       document.body.textContent = 'The tech-web graph data could not be loaded.';
       return;
     }
     const layers = graph.layers;
     const nodes = graph.nodes.map(node => ({ ...node }));
-    const edges = graph.edges.map((edge, index) => ({ id: `e${index}`, source: edge[0], target: edge[1], type: edge[2] || 'forward' }));
     const nodeById = new Map(nodes.map(node => [node.id, node]));
-    const forwardEdges = edges.filter(edge => edge.type === 'forward');
-    let positions = new Map();
-    let showUnmapped = Boolean(showUnmappedToggle?.checked);
-    const initialFocus = readFocus(ids);
-    let focus = { type: 'lab', id: labs.some(lab => lab.id === initialFocus) ? initialFocus : labs[0].id };
-
-    function futuresForLab(lab) {
-      const path = new Set(lab.path);
-      return [...new Set(forwardEdges.filter(edge => path.has(edge.source) && nodeById.get(edge.target).layer === 'future').map(edge => edge.target))];
-    }
-    function labUsesNode(lab, nodeId) { return lab.path.includes(nodeId) || futuresForLab(lab).includes(nodeId); }
-    nodes.forEach(node => { node.count = labs.filter(lab => labUsesNode(lab, node.id)).length; });
-    function visibleNodes() {
-      return showUnmapped ? nodes : nodes.filter(node => node.count > 0);
-    }
-    function visibleNodeIds() {
-      return new Set(visibleNodes().map(node => node.id));
+    const allEdges = labs.flatMap(lab => (graph.labEdges[lab.id] || []).map(([sourceId, targetId]) => ({
+      lab,
+      source: nodeById.get(sourceId),
+      target: nodeById.get(targetId)
+    })));
+    const invalidEdge = allEdges.find(edge => !edge.source || !edge.target);
+    if (invalidEdge || labs.some(lab => !(graph.labEdges[lab.id] || []).length)) {
+      document.body.textContent = 'A projected lab edge is missing an endpoint.';
+      return;
     }
 
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = 'Select a lab to trace…';
-    placeholder.disabled = true;
-    select.appendChild(placeholder);
-    const labGroup = document.createElement('optgroup');
-    labGroup.label = 'All labs';
-    labs.slice().sort(compareLabsByFormation).forEach(lab => {
-      const option = document.createElement('option');
-      option.value = lab.id;
-      option.textContent = lab.name;
-      option.selected = lab.id === focus.id;
-      labGroup.appendChild(option);
+    const colors = [
+      'var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)', 'var(--series-5)',
+      'color-mix(in srgb, var(--series-1) 70%, var(--series-2))',
+      'color-mix(in srgb, var(--series-2) 70%, var(--series-3))',
+      'color-mix(in srgb, var(--series-3) 70%, var(--series-4))',
+      'color-mix(in srgb, var(--series-4) 70%, var(--series-5))',
+      'color-mix(in srgb, var(--series-5) 70%, var(--series-1))',
+      'color-mix(in srgb, var(--primary) 55%, var(--series-3))',
+      'color-mix(in srgb, var(--series-2) 55%, var(--series-5))'
+    ];
+    const colorFor = lab => colors[labs.findIndex(item => item.id === lab.id) % colors.length];
+    const COL_WIDTH = 216;
+    const COLUMN_GAP = 104;
+    const TOP = 116;
+    const ROW_GAP = 64;
+    const NODE_HEIGHT = 42;
+    const SIDE = 34;
+    const maxCount = Math.max(...layers.map(layer => nodes.filter(node => node.layer === layer.id).length));
+    const nodeGroups = new Map();
+    const edgeGroup = svgEl('g');
+    const requestedFocus = new URLSearchParams(window.location.search).get('focus');
+    let selectedLabId = labs.some(lab => lab.id === requestedFocus) ? requestedFocus : null;
+
+    layers.forEach((layer, layerIndex) => {
+      const members = nodes.filter(node => node.layer === layer.id);
+      const x = SIDE + layerIndex * (COL_WIDTH + COLUMN_GAP);
+      const offset = (maxCount - members.length) * ROW_GAP / 2;
+      members.forEach((node, nodeIndex) => {
+        node.x = x;
+        node.y = TOP + offset + nodeIndex * ROW_GAP;
+        node.layerIndex = layerIndex;
+      });
     });
-    select.appendChild(labGroup);
-    select.addEventListener('change', () => {
-      if (!select.value) return;
-      focus = { type: 'lab', id: select.value };
-      setActiveLab(focus.id);
-      render();
+    const width = SIDE * 2 + layers.length * COL_WIDTH + (layers.length - 1) * COLUMN_GAP;
+    const height = TOP + maxCount * ROW_GAP + 28;
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    svg.setAttribute('width', width);
+    svg.setAttribute('height', height);
+
+    function textLines(value, maxLength = 25) {
+      const lines = [];
+      let line = '';
+      value.split(/\s+/).forEach(word => {
+        const next = line ? `${line} ${word}` : word;
+        if (next.length > maxLength && line) {
+          lines.push(line);
+          line = word;
+        } else line = next;
+      });
+      if (line) lines.push(line);
+      return lines.slice(0, 2);
+    }
+
+    function addText(parent, value, x, y, className, maxLength) {
+      const lines = maxLength ? textLines(value, maxLength) : [value];
+      const text = svgEl('text', { x, y: lines.length === 1 ? y + 4 : y - 3, class: className });
+      lines.forEach((line, index) => {
+        const span = svgEl('tspan', { x, dy: index === 0 ? 0 : '1.15em' });
+        span.textContent = line;
+        text.appendChild(span);
+      });
+      parent.appendChild(text);
+    }
+
+    layers.forEach((layer, index) => {
+      const x = SIDE + index * (COL_WIDTH + COLUMN_GAP);
+      const number = svgEl('text', { x, y: 30, class: 'web-layer-number-svg' });
+      number.textContent = `LAYER ${layer.number}`;
+      svg.appendChild(number);
+      svg.appendChild(svgEl('line', { x1: x + 64, y1: 26, x2: x + COL_WIDTH, y2: 26, class: 'web-layer-line-svg' }));
+      const heading = svgEl('text', { x, y: 51, class: 'web-layer-heading-svg' });
+      heading.textContent = layer.id === 'implication' ? 'Implication' : layer.label;
+      svg.appendChild(heading);
+      const subheading = svgEl('text', { x, y: 70, class: 'web-layer-subheading-svg' });
+      subheading.textContent = layer.sublabel || '';
+      svg.appendChild(subheading);
     });
-    showUnmappedToggle?.addEventListener('change', () => {
-      showUnmapped = showUnmappedToggle.checked;
-      render();
+
+    const outgoing = new Map();
+    const incoming = new Map();
+    allEdges.forEach(edge => {
+      if (!outgoing.has(edge.source.id)) outgoing.set(edge.source.id, []);
+      if (!incoming.has(edge.target.id)) incoming.set(edge.target.id, []);
+      outgoing.get(edge.source.id).push(edge);
+      incoming.get(edge.target.id).push(edge);
+    });
+    function assignPorts(groups, direction) {
+      groups.forEach((edges, nodeId) => {
+        edges.sort((a, b) => {
+          const one = direction === 'out' ? a.target : a.source;
+          const two = direction === 'out' ? b.target : b.source;
+          return one.y - two.y || a.lab.name.localeCompare(b.lab.name);
+        });
+        const node = nodeById.get(nodeId);
+        const pad = 8;
+        edges.forEach((edge, index) => {
+          const fraction = edges.length === 1 ? .5 : pad / NODE_HEIGHT + (1 - 2 * pad / NODE_HEIGHT) * index / (edges.length - 1);
+          if (direction === 'out') edge.sourceY = node.y + fraction * NODE_HEIGHT;
+          else edge.targetY = node.y + fraction * NODE_HEIGHT;
+        });
+      });
+    }
+    assignPorts(outgoing, 'out');
+    assignPorts(incoming, 'in');
+
+    svg.appendChild(edgeGroup);
+    allEdges.forEach(edge => {
+      const startX = edge.source.x + COL_WIDTH;
+      const endX = edge.target.x;
+      const sameLayer = edge.source.layer === edge.target.layer;
+      const middle = (endX - startX) * .46;
+      const path = svgEl('path', {
+        d: sameLayer
+          ? `M ${startX} ${edge.source.y + NODE_HEIGHT / 2} C ${startX + 56} ${edge.source.y + NODE_HEIGHT / 2}, ${startX + 56} ${edge.target.y + NODE_HEIGHT / 2}, ${startX} ${edge.target.y + NODE_HEIGHT / 2}`
+          : `M ${startX} ${edge.sourceY} C ${startX + middle} ${edge.sourceY}, ${endX - middle} ${edge.targetY}, ${endX} ${edge.targetY}`,
+        class: 'web-route-edge is-base',
+        stroke: colorFor(edge.lab),
+        'data-lab': edge.lab.id
+      });
+      edge.path = path;
+      edgeGroup.appendChild(path);
     });
 
-    function activeState(target = focus) {
-      const activeNodes = new Set();
-      const activeEdges = new Set();
-      if (target.type === 'lab') {
-        const lab = labById.get(target.id);
-        lab.path.forEach(id => activeNodes.add(id));
-        futuresForLab(lab).forEach(id => activeNodes.add(id));
-        edges.forEach(edge => {
-          const bothMapped = lab.path.includes(edge.source) && lab.path.includes(edge.target);
-          const directFuture = lab.path.includes(edge.source) && activeNodes.has(edge.target) && nodeById.get(edge.target).layer === 'future';
-          const feedback = edge.type === 'feedback' && lab.path.includes(edge.source) && lab.path.includes(edge.target);
-          if (bothMapped || directFuture || feedback) activeEdges.add(edge.id);
-        });
-        return { activeNodes, activeEdges, focusNode: null };
-      }
-      activeNodes.add(target.id);
-      const walk = (start, direction) => {
-        const queue = [start];
-        while (queue.length) {
-          const current = queue.shift();
-          forwardEdges.forEach(edge => {
-            const next = direction === 'down' && edge.source === current ? edge.target : direction === 'up' && edge.target === current ? edge.source : null;
-            if (next && !activeNodes.has(next)) { activeNodes.add(next); queue.push(next); }
-          });
-        }
-      };
-      walk(target.id, 'up');
-      walk(target.id, 'down');
-      edges.forEach(edge => { if (activeNodes.has(edge.source) && activeNodes.has(edge.target)) activeEdges.add(edge.id); });
-      return { activeNodes, activeEdges, focusNode: target.id };
-    }
-
-    function layout(width) {
-      const nodeH = 46;
-      const padding = 16;
-      const gap = width >= 720 ? 6 : 10;
-      const headers = [];
-      positions = new Map();
-      let cursorY = 20;
-      layers.forEach(layer => {
-        const members = visibleNodes().filter(node => node.layer === layer.id);
-        if (!members.length) return;
-        const columns = Math.min(width >= 720 ? members.length : width >= 520 ? 4 : 2, members.length);
-        const rows = Math.ceil(members.length / columns);
-        headers.push({ layer, x: padding, y: cursorY });
-        if (width >= 720) {
-          const available = width - padding * 2 - gap * (members.length - 1);
-          const specs = members.map(node => ({
-            node,
-            desired: Math.min(128, Math.max(76, node.label.length * 5.2 + 18)),
-            minimum: 64
-          }));
-          const desiredTotal = specs.reduce((sum, spec) => sum + spec.desired, 0);
-          const minimumTotal = specs.reduce((sum, spec) => sum + spec.minimum, 0);
-          const ratio = desiredTotal > available ? Math.max(0, Math.min(1, (available - minimumTotal) / Math.max(1, desiredTotal - minimumTotal))) : 1;
-          const minimumScale = minimumTotal > available ? available / minimumTotal : 1;
-          const widths = specs.map(spec => minimumScale < 1 ? spec.minimum * minimumScale : spec.minimum + (spec.desired - spec.minimum) * ratio);
-          const used = widths.reduce((sum, value) => sum + value, 0);
-          let cursorX = padding + Math.max(0, (available - used) / 2);
-          specs.forEach((spec, index) => {
-            const nodeW = widths[index];
-            positions.set(spec.node.id, { x: cursorX + nodeW / 2, y: cursorY + 28 + nodeH / 2, w: nodeW, h: nodeH, compact: false, singleLine: false });
-            cursorX += nodeW + gap;
-          });
-        } else {
-          const nodeW = (width - padding * 2 - gap * (columns - 1)) / columns;
-          members.forEach((node, index) => {
-            const column = index % columns;
-            const row = Math.floor(index / columns);
-            positions.set(node.id, { x: padding + nodeW / 2 + column * (nodeW + gap), y: cursorY + 28 + nodeH / 2 + row * (nodeH + gap), w: nodeW, h: nodeH, compact: false, singleLine: false });
-          });
-        }
-        cursorY += 28 + rows * (nodeH + gap) + 30;
-      });
-      return { width, height: cursorY - 8, headers };
-    }
-
-    function edgePath(edge, info) {
-      const source = positions.get(edge.source);
-      const target = positions.get(edge.target);
-      if (edge.type === 'feedback') return `M ${source.x + source.w / 2} ${source.y} C ${info.width - 6} ${source.y}, ${info.width - 6} ${target.y}, ${target.x + target.w / 2} ${target.y}`;
-      const sy = source.y + source.h / 2;
-      const ty = target.y - target.h / 2;
-      const middle = (sy + ty) / 2;
-      return `M ${source.x} ${sy} C ${source.x} ${middle}, ${target.x} ${middle}, ${target.x} ${ty}`;
-    }
-
-    function wrapLabel(label, width) {
-      const maxChars = Math.max(7, Math.floor((width - 18) / 6.2));
-      if (label.length <= maxChars) return [label];
-      const lines = [''];
-      const words = label.trim().split(/\s+/);
-      let truncated = false;
-      words.forEach(word => {
-        if (truncated) return;
-        const index = lines.length - 1;
-        const candidate = lines[index] ? `${lines[index]} ${word}` : word;
-        if (candidate.length <= maxChars || !lines[index]) {
-          lines[index] = candidate;
-          return;
-        }
-        if (lines.length < 2) {
-          lines.push(word);
-          return;
-        }
-        const ellipsis = `${lines[index]}…`;
-        lines[index] = ellipsis.length <= maxChars ? ellipsis : lines[index];
-        truncated = true;
-      });
-      return lines.filter(Boolean);
-    }
-
-    function applyVisualState(state) {
-      svg.querySelectorAll('[data-edge]').forEach(path => {
-        const active = state.activeEdges.has(path.dataset.edge);
-        path.classList.toggle('is-active', active);
-        path.setAttribute('marker-end', `url(#${active ? 'web-arrow-active' : 'web-arrow-neutral'})`);
-      });
-      svg.querySelectorAll('[data-node]').forEach(group => {
-        const id = group.dataset.node;
-        group.classList.toggle('is-active', state.activeNodes.has(id));
-        group.classList.toggle('is-focus', state.focusNode === id);
-      });
-    }
-
-    function previewNode(nodeId) {
-      const target = { type: 'tech', id: nodeId };
-      applyVisualState(activeState(target));
-      updateDetail(target);
-    }
-
-    function restoreFocus() {
-      applyVisualState(activeState());
-      updateDetail();
-    }
-
-    function render() {
-      const width = Math.max(300, Math.round(svg.getBoundingClientRect().width || 720));
-      const state = activeState();
-      const info = layout(width);
-      svg.setAttribute('viewBox', `0 0 ${info.width} ${info.height}`);
-      svg.setAttribute('height', info.height);
-      svg.replaceChildren();
-      const title = svgEl('title');
-      title.textContent = 'Technology dependency web for selected general-intelligence neolabs';
-      svg.appendChild(title);
-      const defs = svgEl('defs');
-      [['web-arrow-neutral', 'var(--muted)'], ['web-arrow-active', 'var(--primary)']].forEach(([id, fill]) => {
-        const marker = svgEl('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 5, markerHeight: 5, orient: 'auto-start-reverse' });
-        marker.appendChild(svgEl('path', { d: 'M 0 0 L 10 5 L 0 10 z', fill }));
-        defs.appendChild(marker);
-      });
-      svg.appendChild(defs);
-      const drawableNodeIds = visibleNodeIds();
-      edges.filter(edge => drawableNodeIds.has(edge.source) && drawableNodeIds.has(edge.target)).forEach(edge => {
-        const active = state.activeEdges.has(edge.id);
-        svg.appendChild(svgEl('path', { d: edgePath(edge, info), class: `web-edge${edge.type === 'feedback' ? ' feedback' : ''}${active ? ' is-active' : ''}`, 'data-edge': edge.id, 'marker-end': `url(#${active ? 'web-arrow-active' : 'web-arrow-neutral'})` }));
-      });
-      info.headers.forEach(header => {
-        const text = svgEl('text', { x: header.x, y: header.y, 'text-anchor': 'start', class: 'web-layer-label' });
-        text.textContent = header.layer.label;
-        svg.appendChild(text);
-        svg.appendChild(svgEl('line', { x1: header.x, y1: header.y + 8, x2: info.width - 12, y2: header.y + 8, class: 'web-layer-rule' }));
-      });
-      visibleNodes().forEach(node => {
-        const pos = positions.get(node.id);
-        const layer = layers.find(item => item.id === node.layer);
-        const group = svgEl('g', { class: `web-node${state.activeNodes.has(node.id) ? ' is-active' : ''}${state.focusNode === node.id ? ' is-focus' : ''}${pos.compact ? ' is-compact' : ''}`, 'data-node': node.id, transform: `translate(${pos.x} ${pos.y})`, style: `--node-color:${layer.color}`, 'aria-hidden': 'true' });
-        group.appendChild(svgEl('rect', { x: -pos.w / 2, y: -pos.h / 2, width: pos.w, height: pos.h, rx: 8, class: 'web-node-rect' }));
-        const lines = wrapLabel(node.label, pos.w);
-        const label = svgEl('text', { x: 0, y: lines.length === 1 ? 4 : -3, 'text-anchor': 'middle', class: 'web-node-label' });
-        lines.slice(0, 2).forEach((line, index) => {
-          const span = svgEl('tspan', { x: 0, dy: index === 0 ? 0 : '1.1em' });
-          span.textContent = line;
-          label.appendChild(span);
-        });
-        group.appendChild(label);
-        const count = svgEl('text', { x: pos.w / 2 - 7, y: -pos.h / 2 + 13, 'text-anchor': 'end', class: 'web-node-count' });
-        count.textContent = node.count;
-        group.appendChild(count);
-        group.addEventListener('click', () => {
-          focus = { type: 'tech', id: node.id };
-          select.value = '';
-          render();
-        });
-        group.addEventListener('mouseenter', () => previewNode(node.id));
-        group.addEventListener('mouseleave', restoreFocus);
+    layers.forEach(layer => {
+      nodes.filter(node => node.layer === layer.id).forEach(node => {
+        const group = svgEl('g', { class: `web-route-node${node.unknown ? ' is-unknown' : ''}` });
+        group.appendChild(svgEl('rect', { x: node.x, y: node.y, width: COL_WIDTH, height: NODE_HEIGHT, rx: 8 }));
+        addText(group, node.label, node.x + 13, node.y + NODE_HEIGHT / 2, 'web-route-node-label', 27);
         svg.appendChild(group);
+        nodeGroups.set(node.id, group);
       });
-      updateDetail();
+    });
+
+    function edgesForLab(labId) {
+      return allEdges.filter(edge => edge.lab.id === labId);
     }
 
-    function renderDetailLinks(container, items, type) {
-      container.replaceChildren();
-      if (!items.length) {
-        const empty = document.createElement('span');
-        empty.className = 'web-detail-empty';
-        empty.textContent = 'None mapped';
-        container.appendChild(empty);
+    function nodeIdsForLab(labId) {
+      return new Set(edgesForLab(labId).flatMap(edge => [edge.source.id, edge.target.id]));
+    }
+
+    function paint(activeLabId, animate) {
+      const activeNodes = new Set();
+      if (activeLabId) {
+        nodeIdsForLab(activeLabId).forEach(nodeId => activeNodes.add(nodeId));
+      }
+      allEdges.forEach(edge => {
+        edge.path.setAttribute('class', !activeLabId
+          ? 'web-route-edge is-base'
+          : edge.lab.id === activeLabId
+            ? `web-route-edge is-lit${animate ? ' is-animated' : ''}`
+            : 'web-route-edge is-faded');
+      });
+      nodeGroups.forEach((group, nodeId) => {
+        const node = nodeById.get(nodeId);
+        group.setAttribute('class', `web-route-node${node.unknown ? ' is-unknown' : ''}${activeLabId ? activeNodes.has(nodeId) ? ' is-lit' : ' is-dim' : ''}`);
+      });
+      if (activeLabId) allEdges.filter(edge => edge.lab.id === activeLabId).forEach(edge => edgeGroup.appendChild(edge.path));
+    }
+
+    function scoreSummary(lab) {
+      const labels = [
+        ['readiness', 'readiness'], ['capability', 'target'], ['dataEfficiency', 'data'],
+        ['computeEfficiency', 'compute'], ['adaptivity', 'adapt'], ['controllability', 'control']
+      ];
+      return labels.map(([key, label]) => `${label} ${analysisScore(lab, key)}`).join(' · ');
+    }
+
+    function appendPanelHeader(titleText, tagText, color) {
+      const row = document.createElement('div');
+      row.className = 'web-panel-title-row';
+      const swatch = document.createElement('span');
+      swatch.className = 'web-panel-swatch';
+      swatch.style.setProperty('--lab-color', color || 'var(--primary)');
+      const title = document.createElement('h2');
+      title.textContent = titleText;
+      const tag = document.createElement('span');
+      tag.className = 'web-panel-tag';
+      tag.textContent = tagText;
+      row.append(swatch, title, tag);
+      panel.appendChild(row);
+    }
+
+    function appendParagraph(text) {
+      const paragraph = document.createElement('p');
+      paragraph.textContent = text;
+      return paragraph;
+    }
+
+    function renderRoute(lab) {
+      const route = document.createElement('div');
+      route.className = 'web-panel-route';
+      const activeNodeIds = nodeIdsForLab(lab.id);
+      layers.forEach((layer, index) => {
+        const stationIds = nodes.filter(node => node.layer === layer.id && activeNodeIds.has(node.id)).map(node => node.id);
+        const group = document.createElement('span');
+        group.className = 'web-route-station-group';
+        stationIds.forEach((nodeId, stationIndex) => {
+          const station = document.createElement('span');
+          station.className = `web-route-station${nodeById.get(nodeId).unknown ? ' is-unknown' : ''}`;
+          station.textContent = nodeById.get(nodeId).label;
+          group.appendChild(station);
+          if (stationIndex < stationIds.length - 1) group.appendChild(document.createTextNode(' + '));
+        });
+        route.appendChild(group);
+        if (index < layers.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'web-route-arrow';
+          arrow.textContent = '→';
+          route.appendChild(arrow);
+        }
+      });
+      return route;
+    }
+
+    function renderPanel() {
+      panel.replaceChildren();
+      if (!selectedLabId) {
+        appendPanelHeader('All lines', 'reading the full map', 'var(--primary)');
+        const first = document.createElement('div');
+        first.className = 'web-panel-copy';
+        first.appendChild(appendParagraph('The map narrows as it moves right. Labs spread across many data and architecture choices, but routes converge on a smaller set of deployment surfaces and consequences. Differentiation is concentrated in the first three layers; implications are often shared.'));
+        const second = document.createElement('div');
+        second.className = 'web-panel-copy';
+        second.appendChild(appendParagraph('Watch the learning-loop layer. Static pretrain-and-release systems share the field with bets on customization, world-model planning, open-ended evolution, recursive improvement, and test-time search. That is where the most consequential technical divergence sits.'));
+        const footer = document.createElement('div');
+        footer.className = 'web-panel-scores';
+        footer.textContent = 'Select a lab to isolate its routes, commentary, and six-axis analyst profile.';
+        panel.append(first, second, footer);
         return;
       }
-      items.forEach((item, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'web-detail-link';
-        button.textContent = item.name || item.label;
-        button.addEventListener('click', () => {
-          focus = { type, id: item.id };
-          select.value = type === 'lab' ? item.id : '';
-          if (type === 'lab') setActiveLab(item.id);
-          render();
-        });
-        container.appendChild(button);
-        if (index < items.length - 1) container.appendChild(document.createTextNode(', '));
-      });
+      const lab = labById.get(selectedLabId);
+      appendPanelHeader(lab.name, graph.labMeta?.[lab.id]?.tag || 'projected technology route', colorFor(lab));
+      const commentary = document.createElement('div');
+      commentary.className = 'web-panel-copy';
+      commentary.appendChild(appendParagraph(lab.note));
+      if (graph.labNarratives?.[lab.id]) commentary.appendChild(appendParagraph(graph.labNarratives[lab.id]));
+      const sources = document.createElement('div');
+      sources.className = 'web-panel-sources';
+      renderCitations(sources, insightIdsForLab(lab), 'Lab sources');
+      const scores = document.createElement('div');
+      scores.className = 'web-panel-scores';
+      const strong = document.createElement('strong');
+      strong.textContent = 'Axis scores';
+      scores.append(strong, document.createTextNode(` — ${scoreSummary(lab)}`));
+      panel.append(commentary, renderRoute(lab), scores, sources);
     }
 
-    function updateDetail(target = focus) {
-      const title = document.querySelector('#web-detail-title');
-      const explanationTarget = document.querySelector('#web-detail-explanation');
-      const labsTarget = document.querySelector('#web-detail-labs');
-      const upstreamTarget = document.querySelector('#web-detail-upstream');
-      const downstreamTarget = document.querySelector('#web-detail-downstream');
-      const citationsTarget = document.querySelector('#web-detail-citations');
-      let relevantLabs;
-      let upstream;
-      let downstream;
-      if (target.type === 'lab') {
-        const lab = labById.get(target.id);
-        title.textContent = lab.name;
-        explanationTarget.textContent = 'Select a node in the web to inspect what that technical commitment or implication represents.';
-        relevantLabs = [lab];
-        upstream = lab.path.map(id => nodeById.get(id)).filter(Boolean);
-        downstream = futuresForLab(lab).map(id => nodeById.get(id)).filter(Boolean);
-        svg.setAttribute('aria-label', `Technology dependency path for ${lab.name}`);
-      } else {
-        const node = nodeById.get(target.id);
-        title.textContent = node.label;
-        explanationTarget.textContent = node.explanation;
-        relevantLabs = labs.filter(lab => labUsesNode(lab, node.id));
-        upstream = edges.filter(edge => edge.target === node.id).map(edge => nodeById.get(edge.source)).filter(Boolean);
-        downstream = edges.filter(edge => edge.source === node.id).map(edge => nodeById.get(edge.target)).filter(Boolean);
-        svg.setAttribute('aria-label', `Upstream and downstream dependencies for ${node.label}`);
+    const allButton = document.createElement('button');
+    allButton.type = 'button';
+    allButton.className = 'web-lab-chip is-reset';
+    allButton.textContent = 'All lines';
+    allButton.addEventListener('click', () => selectLab(null));
+    legend.appendChild(allButton);
+    labs.slice().sort(compareLabsByFormation).forEach(lab => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'web-lab-chip';
+      button.dataset.lab = lab.id;
+      button.style.setProperty('--lab-color', colorFor(lab));
+      const dot = document.createElement('span');
+      dot.className = 'web-lab-chip-dot';
+      const label = document.createElement('span');
+      label.textContent = shortLabName(lab);
+      button.setAttribute('aria-label', `Trace ${lab.name}`);
+      button.append(dot, label);
+      button.addEventListener('click', () => selectLab(selectedLabId === lab.id ? null : lab.id));
+      button.addEventListener('mouseenter', () => { if (!selectedLabId) paint(lab.id, false); });
+      button.addEventListener('mouseleave', () => { if (!selectedLabId) paint(null, false); });
+      legend.appendChild(button);
+    });
+
+    function selectLab(labId) {
+      selectedLabId = labId;
+      if (labId) setActiveLab(labId);
+      else {
+        const params = new URLSearchParams(window.location.search);
+        params.delete('focus');
+        const next = `${window.location.pathname}${params.size ? `?${params}` : ''}${window.location.hash}`;
+        window.history.replaceState(null, '', next);
+        updateViewLinks(ids, null);
       }
-      renderDetailLinks(labsTarget, relevantLabs, 'lab');
-      renderDetailLinks(upstreamTarget, [...new Map(upstream.map(node => [node.id, node])).values()], 'tech');
-      renderDetailLinks(downstreamTarget, [...new Map(downstream.map(node => [node.id, node])).values()], 'tech');
-      renderCitations(citationsTarget, relevantLabs.flatMap(insightIdsForLab), 'Lab sources');
+      document.body.classList.toggle('has-web-selection', Boolean(labId));
+      legend.querySelectorAll('.web-lab-chip').forEach(button => {
+        button.setAttribute('aria-pressed', String(button.dataset.lab === labId || (!labId && button === allButton)));
+      });
+      paint(labId, true);
+      renderPanel();
     }
 
-    const onResize = debounce(render);
-    window.addEventListener('resize', onResize);
-    render();
+    selectLab(selectedLabId);
   }
 
   stripDeprecatedSelectionParam();

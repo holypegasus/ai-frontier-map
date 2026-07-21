@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Tech Web — Twelve Bets on General Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF0EB;
+    --paper-2:#E6E9E2;
+    --ink:#141A18;
+    --ink-soft:#4A524E;
+    --line:#C8CDC4;
+    --node:#FAFBF8;
+    --node-line:#9AA39B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--paper);color:var(--ink);font-family:'Archivo',sans-serif}
+  body{
+    background-image:radial-gradient(circle, #C9CEC5 1px, transparent 1px);
+    background-size:26px 26px;
+    min-height:100vh;
+  }
+  .wrap{max-width:1640px;margin:0 auto;padding:34px 28px 60px}
+
+  header .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;
+  }
+  header h1{
+    font-stretch:112%;font-weight:850;font-size:clamp(30px,4.4vw,54px);
+    line-height:.98;letter-spacing:-.015em;text-transform:uppercase;
+  }
+  header h1 .thin{font-weight:300;font-stretch:80%}
+  header .sub{
+    margin-top:12px;max-width:760px;font-size:15px;line-height:1.55;color:var(--ink-soft);
+  }
+  header .sub b{color:var(--ink);font-weight:600}
+
+  /* legend chips */
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 18px}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;
+    font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;
+    padding:7px 13px;border:1.5px solid var(--line);border-radius:999px;
+    background:var(--node);color:var(--ink);cursor:pointer;
+    transition:border-color .15s, background .15s, opacity .15s, transform .1s;
+  }
+  .chip .dot{width:10px;height:10px;border-radius:3px;background:var(--c)}
+  .chip:hover{border-color:var(--c);transform:translateY(-1px)}
+  .chip:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+  .chip[aria-pressed="true"]{background:var(--c);border-color:var(--c);color:#fff}
+  .chip[aria-pressed="true"] .dot{background:#fff}
+  .chip.reset{border-style:dashed;color:var(--ink-soft)}
+  body.has-selection .chip:not([aria-pressed="true"]):not(.reset){opacity:.45}
+
+  /* map */
+  .map-shell{
+    border:1.5px solid var(--line);border-radius:14px;background:rgba(250,251,248,.6);
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+  svg{display:block}
+  .layer-head{font-stretch:105%;font-weight:800;font-size:15px;letter-spacing:.02em;text-transform:uppercase;fill:var(--ink)}
+  .layer-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--ink-soft);letter-spacing:.05em}
+  .layer-num{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:var(--ink-soft)}
+  .node rect{fill:var(--node);stroke:var(--node-line);stroke-width:1.2;rx:7}
+  .node.unk rect{stroke-dasharray:4 3}
+  .node text{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;fill:var(--ink)}
+  .node.dim rect{opacity:.35}
+  .node.dim text{opacity:.3}
+  .node.lit rect{stroke:var(--ink);stroke-width:1.6}
+
+  .edge{fill:none;stroke-linecap:round;transition:opacity .2s, stroke-width .2s}
+  .edge.base{stroke-width:2;opacity:.5}
+  .edge.faded{opacity:.05}
+  .edge.lit{stroke-width:3.6;opacity:1}
+  @media (prefers-reduced-motion: no-preference){
+    .edge.lit.animate{stroke-dasharray:8 6;animation:flow 1.2s linear infinite}
+    @keyframes flow{to{stroke-dashoffset:-14}}
+  }
+
+  /* narrative panel */
+  .panel{
+    margin-top:18px;border:1.5px solid var(--line);border-radius:14px;
+    background:var(--node);padding:22px 24px;
+    display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:10px 36px;
+  }
+  .panel .title-row{display:flex;align-items:center;gap:12px;grid-column:1/-1}
+  .panel .swatch{width:16px;height:16px;border-radius:5px;background:var(--c,var(--ink))}
+  .panel h2{font-stretch:110%;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.01em}
+  .panel .tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);
+    border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap;
+  }
+  .panel .route{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;line-height:1.9;color:var(--ink);
+  }
+  .panel .route .arrow{color:var(--ink-soft);padding:0 4px}
+  .panel .route .stn{background:var(--paper-2);border-radius:4px;padding:2px 7px;white-space:nowrap;display:inline-block;margin:2px 0}
+  .panel .commentary{font-size:14.5px;line-height:1.6;color:var(--ink)}
+  .panel .commentary p+p{margin-top:10px}
+  .panel .scores{
+    grid-column:1/-1;margin-top:6px;padding-top:14px;border-top:1px dashed var(--line);
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-soft);
+    display:flex;flex-wrap:wrap;gap:8px 22px;
+  }
+  .panel .scores b{color:var(--ink);font-weight:600}
+  .hint{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-top:10px;letter-spacing:.03em}
+
+  @media (max-width:860px){
+    .panel{grid-template-columns:1fr}
+    .wrap{padding:24px 14px 50px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Frontier &amp; neo-labs · general intelligence · July 2026</div>
+    <h1>The Tech Web<span class="thin"> / data → consequence</span></h1>
+    <p class="sub">Twelve labs, five layers: <b>source data</b> feeds an <b>architecture</b>, which is driven by a <b>learning loop</b>, lands on a <b>deployment surface</b>, and terminates in an <b>implication</b>. Routes are projections of each lab's stated thesis, not guarantees — the more novel the line, the more speculative its later stations.</p>
+  </header>
+
+  <div class="legend" id="legend" role="toolbar" aria-label="Select a lab to trace its route"></div>
+
+  <div class="map-shell"><svg id="map" role="img" aria-label="Layered route map of AI labs from source data to implications"></svg></div>
+  <div class="hint">Tap a lab to trace its line · shared stations mean shared bets · dashed stations = undisclosed</div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<script>
+(function(){
+  var COLW = 196, XGAP = 128, TOP = 108, PITCH = 70, NH = 46;
+
+  var layers = [
+    {name:"Source data", sub:"what the system learns from", nodes:[
+      {id:"d_text",  label:"Web text & code"},
+      {id:"d_multi", label:"Human multimodal"},
+      {id:"d_video", label:"Video & sensory streams"},
+      {id:"d_3d",    label:"3D & spatial capture"},
+      {id:"d_models",label:"Existing model weights"},
+      {id:"d_exp",   label:"Self-generated experience"},
+      {id:"d_tasks", label:"Sparse task specs"},
+      {id:"d_unk",   label:"Undisclosed", unk:true}
+    ]},
+    {name:"Architecture", sub:"the substrate of intelligence", nodes:[
+      {id:"a_ar",    label:"Autoregressive transformer"},
+      {id:"a_diff",  label:"Diffusion LM"},
+      {id:"a_liquid",label:"Liquid / continuous-time nets"},
+      {id:"a_wm3d",  label:"Generative 3D world model"},
+      {id:"a_jepa",  label:"JEPA world model"},
+      {id:"a_evo",   label:"Evolved / merged populations"},
+      {id:"a_agent", label:"Agentic systems on models"},
+      {id:"a_ps",    label:"Program synthesis + search"},
+      {id:"a_unk",   label:"Undisclosed", unk:true}
+    ]},
+    {name:"Learning loop", sub:"how capability compounds", nodes:[
+      {id:"l_pretrain",label:"Pretrain → RLHF (static)"},
+      {id:"l_finetune",label:"Continuous customization"},
+      {id:"l_plan",  label:"World-model planning + memory"},
+      {id:"l_open",  label:"Open-ended evolution"},
+      {id:"l_self",  label:"Recursive self-improvement"},
+      {id:"l_rl",    label:"Pure RL from experience"},
+      {id:"l_tts",   label:"Test-time search / adaptation"},
+      {id:"l_unk",   label:"Undisclosed", unk:true}
+    ]},
+    {name:"Deployment surface", sub:"where it meets the world", nodes:[
+      {id:"s_chat",  label:"Consumer assistant"},
+      {id:"s_api",   label:"API & enterprise platform"},
+      {id:"s_agents",label:"Agentic work (code, ops)"},
+      {id:"s_edge",  label:"Edge & on-device"},
+      {id:"s_sim",   label:"Simulated worlds & 3D"},
+      {id:"s_robot", label:"Robotics & physical systems"},
+      {id:"s_sci",   label:"Scientific discovery engine"},
+      {id:"s_none",  label:"No product until endgame", unk:true}
+    ]},
+    {name:"Implication", sub:"business · economy · society · politics", nodes:[
+      {id:"i_labor",  label:"Cognitive-labor automation"},
+      {id:"i_capital",label:"Compute-capital concentration"},
+      {id:"i_cheap",  label:"Commodity intelligence"},
+      {id:"i_phys",   label:"Physical-economy automation"},
+      {id:"i_sci",    label:"Compounding R&D acceleration"},
+      {id:"i_gov",    label:"Alignment & governance stakes"},
+      {id:"i_geo",    label:"National-champion geopolitics"}
+    ]}
+  ];
+
+  var labs = [
+    {id:"openai", name:"OpenAI", color:"#5145CD", tag:"scaled LLM + RL, product-led",
+      edges:[["d_text","a_ar"],["d_multi","a_ar"],["a_ar","l_pretrain"],["l_pretrain","s_chat"],["l_pretrain","s_agents"],["s_chat","i_labor"],["s_agents","i_labor"],["s_chat","i_capital"]],
+      scores:"readiness 3 · target 3 · data 1 · compute 1 · adapt 2 · control 2",
+      text:["The incumbent mainline: internet-scale text and multimodal data into autoregressive transformers, refined by the static pretrain-then-RLHF loop, deployed as the largest consumer assistant and a growing agentic layer.","Projected terminus is broad cognitive-labor automation — funded by, and reinforcing, historic concentration of compute capital. The exposed flank is the learning loop: no continual learning means every gain ships as a discrete retrain."]},
+    {id:"anthropic", name:"Anthropic", color:"#C2410C", tag:"same paradigm, safety-first",
+      edges:[["d_text","a_ar"],["d_multi","a_ar"],["a_ar","l_pretrain"],["l_pretrain","s_api"],["l_pretrain","s_agents"],["s_agents","i_labor"],["s_api","i_gov"]],
+      scores:"readiness 3 · target 3 · data 1 · compute 1–2 · adapt 2 · control 3",
+      text:["Runs the same track as OpenAI through data, architecture, and loop, but branches at deployment: enterprise API and agentic work (notably coding) over consumer scale.","Its distinctive terminal station is governance — constitutional training and interpretability are a bet that whoever solves controllability shapes the rules of the transition, not just the market."]},
+    {id:"sakana", name:"Sakana", color:"#DB2777", tag:"evolutionary merging, collective intelligence",
+      edges:[["d_models","a_evo"],["a_evo","l_open"],["l_open","s_api"],["l_open","s_sci"],["s_api","i_cheap"],["s_api","i_geo"],["s_sci","i_sci"]],
+      scores:"readiness 2 · target 2 · data 3 · compute 3 · adapt 2 · control 1",
+      text:["The only line whose source data is other models: evolution and merging over existing weights, skipping frontier pretraining entirely. The loop is open-ended search rather than gradient descent at scale.","Deploys into Japanese enterprise and automated science (AI Scientist), terminating in commodity intelligence and national-champion geopolitics — Japan's sovereign bet. Weak station: auditing what evolution built."]},
+    {id:"tml", name:"Thinking Machines", color:"#0891B2", tag:"multimodal + RL customization",
+      edges:[["d_text","a_ar"],["d_models","a_ar"],["a_ar","l_finetune"],["l_finetune","s_api"],["s_api","i_cheap"],["s_api","i_labor"]],
+      scores:"readiness 2 · target 3 · data 2 · compute 2 · adapt 2–3 · control 2–3",
+      text:["Orthodox architecture, heterodox loop: the thesis is that the frontier moves from monolithic releases to continuous, per-customer customization — Tinker as fine-tuning infrastructure, with reproducibility and determinism as research pillars.","If customization is the moat, the implication forks: intelligence commoditizes downward while still automating cognitive work. The open question is whether a loop advantage survives without owning a frontier base model."]},
+    {id:"liquid", name:"Liquid AI", color:"#2563EB", tag:"liquid neural networks, edge-first",
+      edges:[["d_multi","a_liquid"],["a_liquid","l_pretrain"],["l_pretrain","s_edge"],["s_edge","i_cheap"],["s_edge","i_phys"]],
+      scores:"readiness 2–3 · target 1–2 · data 2 · compute 3 · adapt 3 · control 2",
+      text:["A genuinely different substrate — continuous-time dynamical networks whose behavior adapts at inference — trained conventionally but deployed where transformers can't go: phones, vehicles, sensors, machines.","Terminates in commodity intelligence and physical-economy automation from the bottom up. It is not an AGI line; it is the line that makes intelligence ambient and cheap at the edge."]},
+    {id:"inception", name:"Inception", color:"#7E22CE", tag:"diffusion language models",
+      edges:[["d_text","a_diff"],["a_diff","l_pretrain"],["l_pretrain","s_api"],["s_api","i_cheap"]],
+      scores:"readiness 2 · target 1–2 · data 1 · compute 3 · adapt 2 · control 2–3",
+      text:["Same data, different generator: diffusion in place of left-to-right decoding, buying parallel generation, native infilling, and order-of-magnitude throughput (Mercury).","The shortest route on the map — a single clean terminus at commodity intelligence. Its strategic role may be as a paradigm the incumbents absorb rather than a lab that outruns them."]},
+    {id:"worldlabs", name:"World Labs", color:"#EA9010", tag:"spatial intelligence, 3D world models",
+      edges:[["d_video","a_wm3d"],["d_3d","a_wm3d"],["a_wm3d","l_pretrain"],["l_pretrain","s_sim"],["s_sim","i_phys"],["s_sim","i_labor"]],
+      scores:"readiness 2 · target 2 · data 1 · compute 1–2 · adapt 1–2 · control 2–3",
+      text:["Sources the data language models ignore — video and 3D capture — into generative world models, shipped as persistent, editable environments (Marble).","Near-term terminus is creative-industry automation; the longer arc runs through simulation as the training ground for robotics, making it upstream infrastructure for physical-economy automation."]},
+    {id:"ami", name:"AMI Labs", color:"#16A34A", tag:"JEPA world models, objective-driven",
+      edges:[["d_video","a_jepa"],["a_jepa","l_plan"],["l_plan","s_robot"],["l_plan","s_api"],["s_robot","i_phys"],["s_api","i_geo"]],
+      scores:"readiness 0–1 · target 3 · data 2–3 · compute 2 · adapt 3 · control 3*",
+      text:["LeCun's contrarian line: learn abstract world representations from video and sensory streams (JEPA, non-generative), and replace the static release loop with planning, persistent memory, and modular domain world models — explicitly not LLMs, explicitly ~5 years from product.","Projected surfaces are robotics and vertical enterprise systems; termini are physical-economy automation and European sovereignty. Controllability-by-construction is the claim that most needs proving."]},
+    {id:"rsi", name:"RSI", color:"#DC2626", tag:"open-endedness → self-improvement",
+      edges:[["d_models","a_agent"],["d_exp","a_agent"],["a_agent","l_open"],["l_open","l_self"],["l_self","s_sci"],["s_sci","i_sci"],["s_sci","i_gov"]],
+      scores:"readiness 0 · target 3 · data 2 · compute 1 · adapt 3 · control 0–1",
+      text:["The only route with a station-to-station transfer inside a layer: open-ended evolutionary search is the vehicle intended to reach recursive self-improvement — AI that finds its own weaknesses, designs fixes, and applies them without a human in the loop.","Deploys, if it works, as an automated research engine; terminates simultaneously at compounding R&D and at the sharpest governance stakes on the map. The route's premise and its risk are the same station."]},
+    {id:"ineffable", name:"Ineffable", color:"#0D9488", tag:"pure RL superlearner",
+      edges:[["d_exp","a_agent"],["a_agent","l_rl"],["l_rl","s_sci"],["s_sci","i_sci"],["s_sci","i_geo"]],
+      scores:"readiness 0 · target 3 · data 3/1 · compute 1 · adapt 3 · control 1",
+      text:["Silver's line begins where every other line's data ends: no human corpus at all. Experience generated in simulation and self-play feeds RL-native agents in a continual learning loop — pretraining is skipped on principle.","Projected surface is discovery beyond human knowledge; termini are compounding science and UK sovereign geopolitics (Nvidia partnership, UK sovereign fund). Reward specification at superhuman capability is the unbuilt bridge."]},
+    {id:"ndea", name:"Ndea", color:"#65A30D", tag:"program synthesis + guided search",
+      edges:[["d_tasks","a_ps"],["a_ps","l_tts"],["l_tts","s_sci"],["l_tts","s_api"],["s_api","i_cheap"],["s_sci","i_sci"]],
+      scores:"readiness 0–1 · target 3 · data 3 · compute 2–3 · adapt 3 · control 2–3",
+      text:["Chollet's route inverts the data layer: intelligence measured by how little data is needed. Sparse task specifications drive neural-guided program synthesis, with adaptation happening at test time rather than in training.","Synthesized programs are readable and verifiable — the most inspectable line on the map. Termini: efficient commodity intelligence and, ultimately, a factory for scientific advancement."]},
+    {id:"ssi", name:"SSI", color:"#64748B", tag:"straight shot to safe superintelligence",
+      edges:[["d_unk","a_unk"],["a_unk","l_unk"],["l_unk","s_none"],["s_none","i_gov"],["s_none","i_capital"]],
+      scores:"readiness 0 · target 3 · data ? · compute 1 · adapt ? · control 3-as-goal",
+      text:["The dashed line: every technical station is undisclosed by design, and the deployment surface is deliberately empty until the end state. What is public is the destination — superintelligence with safety as the founding constraint — and the frontier-scale capital being consumed to get there.","Its map presence is therefore almost purely implicational: it raises governance stakes and compute concentration without touching a market on the way."]}
+  ];
+
+  // ---- layout ----
+  var maxCount = 0;
+  layers.forEach(function(L){ if(L.nodes.length>maxCount) maxCount=L.nodes.length; });
+  var nodeById = {};
+  layers.forEach(function(L, li){
+    var x = 40 + li*(COLW+XGAP);
+    var offset = (maxCount - L.nodes.length)*PITCH/2;
+    L.nodes.forEach(function(n, ni){
+      n.x = x; n.y = TOP + offset + ni*PITCH; n.layer = li;
+      nodeById[n.id] = n;
+    });
+  });
+  var W = 40 + layers.length*(COLW+XGAP) - XGAP + 40;
+  var H = TOP + maxCount*PITCH + 20;
+
+  var svg = document.getElementById('map');
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs, parent){
+    var e = document.createElementNS(NS, tag);
+    for(var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent||svg).appendChild(e); return e;
+  }
+
+  // layer headers
+  layers.forEach(function(L, li){
+    var x = 40 + li*(COLW+XGAP);
+    var t = el('text',{x:x,y:44,'class':'layer-num'}); t.textContent = 'LAYER '+(li+1)+' ─────────';
+    var h = el('text',{x:x,y:66,'class':'layer-head'}); h.textContent = L.name;
+    var s = el('text',{x:x,y:82,'class':'layer-sub'}); s.textContent = L.sub;
+  });
+
+  // ---- ports: spread edge endpoints across node edges ----
+  var allEdges = [];
+  labs.forEach(function(lab){
+    lab.edges.forEach(function(pair){
+      allEdges.push({lab:lab, from:nodeById[pair[0]], to:nodeById[pair[1]]});
+    });
+  });
+  var outsByNode = {}, insByNode = {};
+  allEdges.forEach(function(e){
+    (outsByNode[e.from.id] = outsByNode[e.from.id]||[]).push(e);
+    (insByNode[e.to.id]   = insByNode[e.to.id]  ||[]).push(e);
+  });
+  function assignPorts(map, key){
+    for(var id in map){
+      var list = map[id];
+      list.sort(function(a,b){
+        var na = key==='out'? a.to : a.from, nb = key==='out'? b.to : b.from;
+        return (na.y-nb.y) || (a.lab.name<b.lab.name?-1:1);
+      });
+      var n = nodeById[id], pad = 9;
+      list.forEach(function(e, i){
+        var frac = list.length===1 ? .5 : pad/NH + (1-2*pad/NH)*i/(list.length-1);
+        if(key==='out') e.sy = n.y + frac*NH; else e.ty = n.y + frac*NH;
+      });
+    }
+  }
+  assignPorts(outsByNode,'out'); assignPorts(insByNode,'in');
+
+  // ---- draw edges (under nodes) ----
+  var edgeGroup = el('g',{});
+  allEdges.forEach(function(e){
+    var d;
+    if(e.from.layer === e.to.layer){ // intra-layer transfer (RSI: open→self)
+      var x = e.from.x + COLW, y1 = e.from.y + NH*0.5, y2 = e.to.y + NH*0.5;
+      d = 'M '+x+' '+y1+' C '+(x+56)+' '+y1+', '+(x+56)+' '+y2+', '+x+' '+y2;
+    } else {
+      var x1 = e.from.x + COLW, x2 = e.to.x;
+      var mx = (x2-x1)*0.46;
+      d = 'M '+x1+' '+e.sy+' C '+(x1+mx)+' '+e.sy+', '+(x2-mx)+' '+e.ty+', '+x2+' '+e.ty;
+    }
+    e.path = el('path',{d:d,'class':'edge base',stroke:e.lab.color,'data-lab':e.lab.id}, edgeGroup);
+  });
+
+  // ---- draw nodes ----
+  var nodeEls = {};
+  layers.forEach(function(L){
+    L.nodes.forEach(function(n){
+      var g = el('g',{'class':'node'+(n.unk?' unk':'')});
+      el('rect',{x:n.x,y:n.y,width:COLW,height:NH,rx:7}, g);
+      var words = n.label.split(' ');
+      var lines = [];
+      var cur = '';
+      words.forEach(function(w){
+        if((cur+' '+w).trim().length > 24){ lines.push(cur.trim()); cur = w; }
+        else cur = (cur+' '+w);
+      });
+      if(cur.trim()) lines.push(cur.trim());
+      lines.slice(0,2).forEach(function(ln, i){
+        var ty = n.y + (lines.length===1 ? NH/2+4 : NH/2-3 + i*14);
+        var t = el('text',{x:n.x+12,y:ty}, g);
+        t.textContent = ln;
+      });
+      nodeEls[n.id] = g;
+    });
+  });
+
+  // ---- legend ----
+  var legend = document.getElementById('legend');
+  var resetBtn = document.createElement('button');
+  resetBtn.className = 'chip reset'; resetBtn.textContent = 'ALL LINES';
+  resetBtn.setAttribute('aria-pressed','false');
+  resetBtn.addEventListener('click', function(){ select(null); });
+  legend.appendChild(resetBtn);
+  labs.forEach(function(lab){
+    var b = document.createElement('button');
+    b.className = 'chip'; b.style.setProperty('--c', lab.color);
+    b.setAttribute('aria-pressed','false'); b.dataset.lab = lab.id;
+    b.innerHTML = '<span class="dot"></span>' + lab.name;
+    b.addEventListener('click', function(){ select(selected===lab.id ? null : lab.id); });
+    b.addEventListener('mouseenter', function(){ if(!selected) preview(lab.id); });
+    b.addEventListener('mouseleave', function(){ if(!selected) preview(null); });
+    legend.appendChild(b);
+  });
+
+  var selected = null;
+  function paint(activeId, animate){
+    allEdges.forEach(function(e){
+      var cls = 'edge ';
+      if(!activeId) cls += 'base';
+      else if(e.lab.id===activeId) cls += 'lit' + (animate?' animate':'');
+      else cls += 'faded';
+      e.path.setAttribute('class', cls);
+    });
+    var litNodes = {};
+    if(activeId){
+      allEdges.forEach(function(e){
+        if(e.lab.id===activeId){ litNodes[e.from.id]=1; litNodes[e.to.id]=1; }
+      });
+    }
+    for(var id in nodeEls){
+      var g = nodeEls[id];
+      var base = 'node' + (nodeById[id].unk?' unk':'');
+      if(!activeId) g.setAttribute('class', base);
+      else g.setAttribute('class', base + (litNodes[id]?' lit':' dim'));
+    }
+    // raise lit edges
+    if(activeId){
+      allEdges.forEach(function(e){ if(e.lab.id===activeId) edgeGroup.appendChild(e.path); });
+    }
+  }
+  function preview(id){ paint(id, false); }
+
+  function routeString(lab){
+    var byLayer = [[],[],[],[],[]];
+    var seen = {};
+    lab.edges.forEach(function(p){
+      [p[0],p[1]].forEach(function(id){
+        var n = nodeById[id];
+        if(!seen[id]){ seen[id]=1; byLayer[n.layer].push(n.label); }
+      });
+    });
+    return byLayer.map(function(arr){
+      return arr.map(function(l){ return '<span class="stn">'+l+'</span>'; }).join(' + ');
+    }).join('<span class="arrow">→</span>');
+  }
+
+  var panel = document.getElementById('panel');
+  function renderPanel(lab){
+    if(!lab){
+      panel.style.removeProperty('--c');
+      panel.innerHTML =
+        '<div class="title-row"><span class="swatch"></span><h2>All lines</h2><span class="tag">reading the whole map</span></div>' +
+        '<div class="commentary"><p>The map narrows as it moves right. Twelve labs spread across eight data sources and nine architectures, but their routes converge on a handful of termini — most traffic ends at <b>cognitive-labor automation</b>, <b>commodity intelligence</b>, or <b>governance stakes</b>. Differentiation lives in layers 1–3; consequence is shared.</p></div>' +
+        '<div class="commentary"><p>Watch the learning-loop layer: it splits the field cleanly. Six labs still run the static pretrain-and-release loop; the other six have made a <em>different loop</em> the entire company thesis — customization, planning, evolution, self-improvement, pure RL, test-time search. That is the layer where the next paradigm fight happens.</p></div>' +
+        '<div class="scores"><span>Select a lab to see its route, commentary, and axis scores from the comparison table.</span></div>';
+      return;
+    }
+    panel.style.setProperty('--c', lab.color);
+    panel.innerHTML =
+      '<div class="title-row"><span class="swatch"></span><h2>'+lab.name+'</h2><span class="tag">'+lab.tag+'</span></div>' +
+      '<div class="commentary"><p>'+lab.text[0]+'</p><p>'+lab.text[1]+'</p></div>' +
+      '<div class="route">'+routeString(lab)+'</div>' +
+      '<div class="scores"><span><b>Axis scores</b> — '+lab.scores+'</span></div>';
+  }
+
+  function select(id){
+    selected = id;
+    document.body.classList.toggle('has-selection', !!id);
+    document.querySelectorAll('.chip').forEach(function(c){
+      c.setAttribute('aria-pressed', String(c.dataset.lab===id));
+    });
+    paint(id, true);
+    renderPanel(id ? labs.filter(function(l){return l.id===id;})[0] : null);
+  }
+
+  paint(null,false);
+  renderPanel(null);
+})();
+</script>
+</body>
+</html>
