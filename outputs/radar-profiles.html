@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Six-axis radar profiles for AI neolabs.">
+  <title>Neolab Radar Profiles</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body data-page="radar">
+  <header class="site-header">
+    <a class="brand" href="index.html" data-view-link data-target="index.html">AI Neolab Maps</a>
+    <nav class="view-nav" aria-label="Views">
+      <a href="space.html" data-view-link data-target="space.html">Space</a>
+      <a class="is-current" href="radar-profiles.html" data-view-link data-target="radar-profiles.html">Radar</a>
+      <a href="tech-web.html" data-view-link data-target="tech-web.html">Tech web</a>
+    </nav>
+  </header>
+  <main class="view-main radar-main">
+    <div class="radar-workspace">
+      <section class="radar-chart-column" aria-label="Radar comparison">
+        <div class="radar-plot"><svg id="radar-svg" class="radar-svg" role="img"></svg></div>
+        <div class="legend radar-legend"><span id="radar-cohort-label" class="muted"></span><span><i id="radar-selected-swatch" class="legend-line solid-line"></i><span>Highlight: <span id="radar-selected-label"></span></span></span></div>
+      </section>
+      <section class="radar-table-wrap" aria-labelledby="radar-table-title">
+        <h2 id="radar-table-title">Lab profiles</h2>
+        <table class="radar-table">
+          <thead><tr><th scope="col">Lab</th><th scope="col">Thesis / differentiator</th><th scope="col">Key people</th></tr></thead>
+          <tbody id="radar-lab-table-body"></tbody>
+        </table>
+      </section>
+    </div>
+    <p class="source-note">Scores use a directional 0–3 analyst scale: 0 = none / NA, 1 = low, 2 = mid, 3 = high. Company and people information reflects public disclosures.</p>
+    <p class="source-note last-updated" data-last-updated></p>
+  </main>
+  <script src="neolabs-data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
