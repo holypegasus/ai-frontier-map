@@ -903,6 +903,8 @@
     updateViewLinks(ids);
     const svg = query('#radar-svg');
     const tableBody = query('#radar-lab-table-body');
+    const workspace = query('.radar-workspace');
+    const tableWrap = query('.radar-table-wrap');
     const axisTooltip = createDelayedTooltip();
     query('#radar-cohort-label').textContent = `${labs.length} profiles shown`;
     const axes = Object.entries(architectureMetrics).map(([key, metric]) => ({
@@ -925,8 +927,8 @@
     const initialFocus = readFocus(ids);
     let selectedId = labs.some(lab => lab.id === initialFocus) ? initialFocus : labs[0].id;
     let geometry;
-    let chartMode = 'radar';
     let selectedAxisIndex = 0;
+    let axisTableExpanded = false;
 
     function colorFor(lab) { return colors[labs.findIndex(item => item.id === lab.id) % colors.length]; }
     function activateLab(id) {
@@ -935,22 +937,31 @@
       updateSelection();
       updateAria();
     }
-    function activateAxis(index) {
+    function expandAxisTable(index, labId = null) {
+      if (labId) {
+        selectedId = labId;
+        setActiveLab(selectedId);
+      }
       selectedAxisIndex = index;
-      chartMode = 'rank';
-      buildChart();
+      axisTableExpanded = true;
+      updateSelection();
       updateAria();
     }
-    function activateLabAxis(id, index) {
-      selectedId = id;
-      setActiveLab(selectedId);
-      activateAxis(index);
-    }
-    function showRadar() {
-      chartMode = 'radar';
-      buildChart();
+    function collapseAxisTable() {
+      axisTableExpanded = false;
+      updateAxisTable();
       updateAria();
     }
+
+    const headerRow = tableWrap.querySelector('thead tr');
+    axes.forEach((axis, index) => {
+      const header = document.createElement('th');
+      header.scope = 'col';
+      header.className = 'radar-axis-column';
+      header.dataset.axis = String(index);
+      header.textContent = axis.label;
+      headerRow.appendChild(header);
+    });
 
     labs.forEach(lab => {
       const row = document.createElement('tr');
@@ -1006,11 +1017,20 @@
       renderCitations(noteCitations, insightIdsForLab(lab));
       noteCell.appendChild(noteCitations);
       row.appendChild(noteCell);
-
-      const peopleCell = document.createElement('td');
-      peopleCell.dataset.label = 'Key people';
-      peopleCell.appendChild(renderPeopleList(lab));
-      row.appendChild(peopleCell);
+      axes.forEach((axis, index) => {
+        const axisCell = document.createElement('td');
+        axisCell.className = 'radar-axis-column';
+        axisCell.dataset.axis = String(index);
+        axisCell.dataset.label = axis.label;
+        const score = document.createElement('strong');
+        score.className = 'radar-axis-score';
+        score.textContent = `${analysisScore(lab, axis.key)}/3`;
+        const rationale = document.createElement('span');
+        rationale.className = 'radar-axis-rationale';
+        rationale.textContent = analysisRationale(lab, axis.key) || 'No public rationale';
+        axisCell.append(score, rationale);
+        row.appendChild(axisCell);
+      });
 
       row.addEventListener('click', event => {
         if (!event.target.closest('a')) activateLab(lab.id);
@@ -1030,15 +1050,6 @@
         return `${point.x},${point.y}`;
       }).join(' ');
     }
-    function truncatedLabel(value, maxLength) {
-      return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
-    }
-    function rankLabsForAxis(axis) {
-      return labs.slice().sort((a, b) => {
-        const scoreDelta = analysisScore(b, axis.key) - analysisScore(a, axis.key);
-        return scoreDelta || compareLabsByFormation(a, b);
-      });
-    }
     function addAxisLabel(index, axis, width, layer) {
       const labelWidth = Math.max(88, Math.min(148, axis.label.length * 7.2 + 22));
       const labelHeight = 24;
@@ -1055,7 +1066,7 @@
         transform: `translate(${x} ${y})`,
         class: 'radar-axis-label',
         role: 'button',
-        'aria-label': `Rank labs by ${axis.label}`
+        'aria-label': `Show all axis scores and rationales; highlight ${axis.label}`
       });
       label.appendChild(svgEl('rect', { x: -labelWidth / 2, y: -labelHeight / 2, width: labelWidth, height: labelHeight, rx: 8, class: 'radar-axis-label-bg' }));
       const text = svgEl('text', { x: 0, y: 4, 'text-anchor': 'middle', class: 'radar-axis-label-text' });
@@ -1064,7 +1075,7 @@
       axisTooltip.bind(label, axis.description);
       label.addEventListener('click', event => {
         event.stopPropagation();
-        activateAxis(index);
+        expandAxisTable(index);
       });
       layer.appendChild(label);
     }
@@ -1073,29 +1084,25 @@
         transform: `translate(${point.x} ${point.y})`,
         class: 'radar-axis-vertex',
         role: 'button',
-        'aria-label': `Rank labs by ${axis.label}`
+        'aria-label': `Show all axis scores and rationales; highlight ${axis.label}`
       });
       vertex.appendChild(svgEl('circle', { cx: 0, cy: 0, r: 15, class: 'radar-axis-vertex-hit' }));
       vertex.appendChild(svgEl('circle', { cx: 0, cy: 0, r: 3.5, class: 'radar-axis-vertex-dot' }));
       axisTooltip.bind(vertex, axis.description);
       vertex.addEventListener('click', event => {
         event.stopPropagation();
-        activateAxis(index);
+        expandAxisTable(index);
       });
       layer.appendChild(vertex);
     }
 
     function buildChart() {
       const width = Math.max(300, Math.round(svg.getBoundingClientRect().width || 720));
-      const height = chartMode === 'rank' ? Math.max(width < 440 ? 390 : 420, 104 + labs.length * 26) : (width < 440 ? 360 : 420);
+      const height = width < 440 ? 360 : 420;
       geometry = { width, height, cx: width / 2, cy: height / 2 + 8, radius: Math.min(width < 440 ? width * .3 : width * .34, height * .35, 175) };
       svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
       svg.setAttribute('height', height);
       svg.replaceChildren();
-      if (chartMode === 'rank') {
-        buildRankChart(width, height);
-        return;
-      }
       buildRadarChart(width);
     }
 
@@ -1136,13 +1143,13 @@
             class: `radar-profile-vertex${lab.id === selectedId ? ' is-selected' : ''}`,
             'data-lab': lab.id,
             'data-axis': String(index),
-            'aria-label': `Rank labs by ${axis.label}; ${lab.name} score ${score}`
+            'aria-label': `Show all axis scores and rationales; ${lab.name} ${axis.label} score ${score}`
           });
           vertex.style.setProperty('--radar-color', colorFor(lab));
           axisTooltip.bind(vertex, axis.description);
           vertex.addEventListener('click', event => {
             event.stopPropagation();
-            activateLabAxis(lab.id, index);
+            expandAxisTable(index, lab.id);
           });
           profileVertices.appendChild(vertex);
         });
@@ -1154,116 +1161,12 @@
       updateSelection();
     }
 
-    function buildRankChart(width, height) {
-      const axis = axes[selectedAxisIndex] || axes[0];
-      const rankedLabs = rankLabsForAxis(axis);
-      const margin = width < 440 ? 10 : 14;
-      const top = 58;
-      const headerHeight = 28;
-      const rowHeight = 24;
-      const labColumnWidth = width < 440 ? 88 : 134;
-      const scoreColumnWidth = Math.max(24, (width - margin * 2 - labColumnWidth) / axes.length);
-      const tableWidth = labColumnWidth + scoreColumnWidth * axes.length;
-      const heading = svgEl('text', { x: margin + labColumnWidth, y: 24, class: 'radar-rank-heading' });
-      heading.textContent = `${axis.label} rank order`;
-      svg.appendChild(heading);
-      const subheading = svgEl('text', { x: margin + labColumnWidth, y: 43, class: 'radar-rank-subheading' });
-      subheading.textContent = 'Rows sorted by highlighted axis';
-      svg.appendChild(subheading);
-
-      const back = svgEl('g', { transform: `translate(${margin + 28} 28)`, class: 'radar-rank-back', role: 'button', 'aria-label': 'Return to radar profile view' });
-      const backTitle = svgEl('title');
-      backTitle.textContent = 'Return to radar profile view';
-      back.appendChild(backTitle);
-      back.appendChild(svgEl('rect', { x: -28, y: -14, width: 56, height: 28, rx: 8, class: 'radar-rank-back-bg' }));
-      const backText = svgEl('text', { x: 0, y: 4, 'text-anchor': 'middle', class: 'radar-rank-back-text' });
-      backText.textContent = 'Radar';
-      back.appendChild(backText);
-      back.addEventListener('click', event => {
-        event.stopPropagation();
-        showRadar();
-      });
-      svg.appendChild(back);
-
-      svg.appendChild(svgEl('rect', { x: margin, y: top, width: tableWidth, height: headerHeight + rankedLabs.length * rowHeight, rx: 8, class: 'radar-rank-table-bg' }));
-      svg.appendChild(svgEl('rect', { x: margin + labColumnWidth + selectedAxisIndex * scoreColumnWidth, y: top, width: scoreColumnWidth, height: headerHeight + rankedLabs.length * rowHeight, class: 'radar-rank-selected-column' }));
-      svg.appendChild(svgEl('line', { x1: margin, y1: top + headerHeight, x2: margin + tableWidth, y2: top + headerHeight, class: 'radar-rank-grid-line' }));
-      axes.forEach((metric, index) => {
-        const x = margin + labColumnWidth + index * scoreColumnWidth;
-        if (index > 0) svg.appendChild(svgEl('line', { x1: x, y1: top, x2: x, y2: top + headerHeight + rankedLabs.length * rowHeight, class: 'radar-rank-grid-line' }));
-        const header = svgEl('g', {
-          transform: `translate(${x} ${top})`,
-          class: `radar-rank-column-header${index === selectedAxisIndex ? ' is-selected-axis' : ''}`,
-          role: 'button',
-          'aria-label': `Sort rank table by ${metric.label}`
-        });
-        axisTooltip.bind(header, metric.description);
-        header.appendChild(svgEl('rect', { x: 0, y: 0, width: scoreColumnWidth, height: headerHeight, class: 'radar-rank-header-hit' }));
-        const text = svgEl('text', { x: scoreColumnWidth / 2, y: 18, 'text-anchor': 'middle', class: 'radar-rank-header-text' });
-        text.textContent = width < 440 ? metric.label.slice(0, 1) : metric.label.split(/\s+/).map(word => word[0]).join('');
-        header.appendChild(text);
-        header.addEventListener('click', event => {
-          event.stopPropagation();
-          selectedAxisIndex = index;
-          buildChart();
-          updateAria();
-        });
-        svg.appendChild(header);
-      });
-
-      rankedLabs.forEach((lab, rowIndex) => {
-        const y = top + headerHeight + rowIndex * rowHeight;
-        const row = svgEl('g', {
-          transform: `translate(${margin} ${y})`,
-          class: `radar-rank-row${lab.id === selectedId ? ' is-selected' : ''}`,
-          'data-lab': lab.id,
-          'aria-label': `${lab.name}; ${axis.label} ${analysisScoreLabel(lab, axis.key)}`
-        });
-        row.style.setProperty('--radar-color', colorFor(lab));
-        row.appendChild(svgEl('rect', { x: 0, y: 0, width: tableWidth, height: rowHeight, class: 'radar-rank-row-bg' }));
-        const swatch = svgEl('circle', { cx: 9, cy: rowHeight / 2, r: 3.4, class: 'radar-rank-row-swatch' });
-        row.appendChild(swatch);
-        const label = svgEl('text', { x: 18, y: rowHeight / 2 + 4, class: 'radar-rank-label' });
-        label.textContent = truncatedLabel(width < 440 ? lab.code : lab.name, width < 440 ? 8 : 18);
-        row.appendChild(label);
-        axes.forEach((metric, colIndex) => {
-          const x = labColumnWidth + colIndex * scoreColumnWidth;
-          const cell = svgEl('g', {
-            transform: `translate(${x} 0)`,
-            class: `radar-rank-cell${colIndex === selectedAxisIndex ? ' is-selected-axis' : ''}`,
-            'aria-label': `${metric.label}: ${analysisScoreLabel(lab, metric.key)}`
-          });
-          axisTooltip.bind(cell, metric.description);
-          cell.appendChild(svgEl('rect', { x: 0, y: 0, width: scoreColumnWidth, height: rowHeight, class: 'radar-rank-cell-hit' }));
-          const scoreText = svgEl('text', { x: scoreColumnWidth / 2, y: rowHeight / 2 + 4, 'text-anchor': 'middle', class: 'radar-rank-cell-text' });
-          scoreText.textContent = String(analysisScore(lab, metric.key));
-          cell.appendChild(scoreText);
-          cell.addEventListener('click', event => {
-            event.stopPropagation();
-            selectedAxisIndex = colIndex;
-            activateLab(lab.id);
-            buildChart();
-            updateAria();
-          });
-          row.appendChild(cell);
-        });
-        row.addEventListener('click', () => {
-          activateLab(lab.id);
-        });
-        svg.appendChild(row);
-      });
-      updateSelection();
-    }
-
     function updateSelection() {
       svg.querySelectorAll('.radar-lab-profile').forEach(profile => {
         profile.classList.toggle('is-selected', profile.dataset.lab === selectedId);
       });
       svg.querySelectorAll('.radar-profile-vertex').forEach(vertex => {
         vertex.classList.toggle('is-selected', vertex.dataset.lab === selectedId);
-      });
-      svg.querySelectorAll('.radar-rank-row').forEach(row => {
-        row.classList.toggle('is-selected', row.dataset.lab === selectedId);
       });
       tableBody.querySelectorAll('tr').forEach(row => {
         const isSelected = row.dataset.lab === selectedId;
@@ -1272,20 +1175,27 @@
       });
       query('#radar-selected-swatch').style.setProperty('--radar-color', colorFor(labById.get(selectedId)));
       query('#radar-selected-label').textContent = labById.get(selectedId).name;
+      updateAxisTable();
+    }
+
+    function updateAxisTable() {
+      workspace.classList.toggle('has-axis-table', axisTableExpanded);
+      tableWrap.classList.toggle('is-axis-expanded', axisTableExpanded);
+      tableWrap.querySelectorAll('.radar-axis-column').forEach(cell => {
+        cell.classList.toggle('is-selected-axis', Number(cell.dataset.axis) === selectedAxisIndex);
+      });
     }
 
     function updateAria() {
       const lab = labById.get(selectedId);
       const axis = axes[selectedAxisIndex] || axes[0];
-      svg.setAttribute('aria-label', chartMode === 'rank'
-        ? `${axis.label} rank order for all ${labs.length} neolabs; highlighted profile: ${lab.name}`
-        : `Six-axis radar profiles for all ${labs.length} neolabs; highlighted profile: ${lab.name}`);
+      svg.setAttribute('aria-label', `Six-axis radar profiles for all ${labs.length} neolabs; highlighted profile: ${lab.name}${axisTableExpanded ? `; expanded score and rationale table with ${axis.label} highlighted` : ''}`);
     }
 
     const onResize = debounce(buildChart);
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && chartMode === 'rank') showRadar();
+      if (event.key === 'Escape' && axisTableExpanded) collapseAxisTable();
     });
     buildChart();
     updateAria();

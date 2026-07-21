@@ -442,24 +442,6 @@ body[data-page="space"].space-chrome-visible .space-chrome-cue { width: 6rem; op
 .radar-svg .radar-lab-profile.is-selected { fill: color-mix(in srgb, var(--radar-color) 20%, transparent); stroke: var(--radar-color); stroke-width: 3; opacity: 1; }
 .radar-svg .radar-profile-vertex { fill: transparent; cursor: pointer; pointer-events: all; }
 .radar-svg .radar-profile-vertex:hover { fill: color-mix(in srgb, var(--primary) 30%, transparent); }
-.radar-svg .radar-rank-heading { fill: var(--foreground); font-weight: 500; }
-.radar-svg .radar-rank-subheading, .radar-svg .radar-rank-score { fill: var(--muted); }
-.radar-svg .radar-rank-back { cursor: pointer; }
-.radar-svg .radar-rank-back-bg { fill: color-mix(in srgb, var(--background) 72%, transparent); stroke: color-mix(in srgb, var(--foreground) 18%, transparent); stroke-width: 1; transition: fill 160ms ease, stroke 160ms ease; vector-effect: non-scaling-stroke; }
-.radar-svg .radar-rank-back:hover .radar-rank-back-bg { fill: color-mix(in srgb, var(--background) 88%, transparent); stroke: color-mix(in srgb, var(--primary) 58%, transparent); }
-.radar-svg .radar-rank-back-text, .radar-svg .radar-rank-label { fill: var(--foreground); font-weight: 500; }
-.radar-svg .radar-rank-table-bg { fill: color-mix(in srgb, var(--background) 72%, transparent); stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.radar-svg .radar-rank-selected-column { fill: color-mix(in srgb, var(--primary) 14%, transparent); }
-.radar-svg .radar-rank-grid-line { stroke: var(--border); stroke-width: 1; opacity: .8; vector-effect: non-scaling-stroke; }
-.radar-svg .radar-rank-column-header, .radar-svg .radar-rank-cell, .radar-svg .radar-rank-row { cursor: pointer; }
-.radar-svg .radar-rank-header-hit, .radar-svg .radar-rank-cell-hit { fill: transparent; pointer-events: all; }
-.radar-svg .radar-rank-header-text, .radar-svg .radar-rank-cell-text { fill: var(--foreground); font-weight: 500; }
-.radar-svg .radar-rank-column-header.is-selected-axis .radar-rank-header-text,
-.radar-svg .radar-rank-cell.is-selected-axis .radar-rank-cell-text { fill: var(--primary); }
-.radar-svg .radar-rank-row-bg { fill: transparent; transition: fill 140ms ease; }
-.radar-svg .radar-rank-row:hover .radar-rank-row-bg,
-.radar-svg .radar-rank-row.is-selected .radar-rank-row-bg { fill: color-mix(in srgb, var(--radar-color) 15%, transparent); }
-.radar-svg .radar-rank-row-swatch { fill: var(--radar-color); stroke: var(--background); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .radar-legend { justify-content: center; }
 .solid-line { border-top: 3px solid var(--radar-color, var(--series-1)); }
 .centered-detail { text-align: center; }
@@ -468,9 +450,17 @@ body[data-page="space"].space-chrome-visible .space-chrome-cue { width: 6rem; op
 .radar-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: .77rem; }
 .radar-table th, .radar-table td { padding: .48rem .42rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 .radar-table thead th { color: var(--muted); font-weight: 500; font-size: .72rem; }
+.radar-table .radar-axis-column { display: none; }
 .radar-table thead th:nth-child(1) { width: 25%; }
-.radar-table thead th:nth-child(2) { width: 35%; }
-.radar-table thead th:nth-child(3) { width: 40%; }
+.radar-table thead th:nth-child(2) { width: 75%; }
+.radar-table-wrap.is-axis-expanded { --axis-table-overlap: min(42rem, 45vw); position: relative; z-index: 8; width: calc(100% + var(--axis-table-overlap)); margin-left: calc(-1 * var(--axis-table-overlap)); padding: .8rem; border: 1px solid var(--border); border-radius: 12px; background: color-mix(in srgb, var(--background) 97%, transparent); box-shadow: 0 20px 54px rgb(0 0 0 / 24%); }
+.radar-table-wrap.is-axis-expanded .radar-table .radar-axis-column { display: table-cell; }
+.radar-table-wrap.is-axis-expanded .radar-table thead th:nth-child(1) { width: 14%; }
+.radar-table-wrap.is-axis-expanded .radar-table thead th:nth-child(2) { width: 22%; }
+.radar-table-wrap.is-axis-expanded .radar-table thead th:nth-child(n+3) { width: 10.666%; }
+.radar-table-wrap.is-axis-expanded .radar-axis-column.is-selected-axis { background: color-mix(in srgb, var(--primary) 7%, transparent); }
+.radar-axis-score { display: block; margin-bottom: .2rem; color: var(--foreground); font-size: .88rem; font-weight: 500; }
+.radar-axis-rationale { display: block; color: var(--muted); font-size: .67rem; line-height: 1.35; }
 .radar-table tbody tr { cursor: pointer; transition: background-color 140ms ease; }
 .radar-table tbody tr.is-selected { background: color-mix(in srgb, var(--accent-1) 42%, transparent); }
 .radar-lab-button, .radar-name-website { align-items: center; gap: .45rem; max-width: 100%; padding: .1rem 0; color: var(--foreground); text-align: left; }
@@ -496,17 +486,10 @@ body[data-page="space"].space-chrome-visible .space-chrome-cue { width: 6rem; op
 .radar-table tbody tr:not(.is-selected) .radar-note-text { display: none; }
 .radar-table tbody tr:not(.is-selected) .radar-keywords-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .radar-table tbody tr.is-selected .citation-reveal { max-height: 7rem; opacity: 1; pointer-events: auto; transform: translateY(0); }
-.radar-table tbody tr:not(.is-selected) .radar-people { display: flex; gap: .22rem; overflow: hidden; white-space: nowrap; }
-.radar-table tbody tr:not(.is-selected) .radar-people li { display: inline; min-width: 0; max-width: 100%; overflow: hidden; }
-.radar-table tbody tr:not(.is-selected) .radar-people li:not(:last-child)::after { content: ","; color: var(--muted); }
-.radar-table tbody tr:not(.is-selected) .radar-person-heading { display: inline; }
-.radar-table tbody tr:not(.is-selected) .radar-person-full,
-.radar-table tbody tr:not(.is-selected) .radar-person-role,
-.radar-table tbody tr:not(.is-selected) .radar-people small { display: none; }
-.radar-table tbody tr:not(.is-selected) .radar-person-last { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; white-space: nowrap; }
 @media (max-width: 1040px) {
   .radar-workspace { grid-template-columns: 1fr; }
   .radar-chart-column { max-width: 720px; margin-inline: auto; }
+  .radar-table-wrap.is-axis-expanded { width: 100%; margin-left: 0; }
 }
 @media (max-width: 700px) {
   .radar-table thead { display: none; }
