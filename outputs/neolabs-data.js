@@ -1,5 +1,5 @@
 window.NEOLABS_DATA = Object.freeze({
-  "version": "2026-07-20",
+  "version": "2026-07-21",
   "schema": {
     "analysisAxes": {
       "readiness": {

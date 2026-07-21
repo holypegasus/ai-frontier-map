@@ -291,7 +291,6 @@
     let currentPositions = new Map();
     const starGroups = new Map();
     const starRadii = new Map();
-    let axisLabels = null;
     let clusterIndicators = null;
     const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const legacyViews = {
@@ -311,7 +310,7 @@
       metricKeys.forEach(key => {
         const option = document.createElement('option');
         option.value = key;
-        option.textContent = architectureMetrics[key].label;
+        option.textContent = `${architectureMetrics[key].label} · 0–3`;
         select.appendChild(option);
       });
       select.value = axisConfig[axis];
@@ -399,7 +398,7 @@
       const select = document.createElement('select');
       select.className = 'axis-select';
       select.dataset.axisSelect = axis;
-      select.setAttribute('aria-label', axis === 'x' ? 'X axis metric' : 'Y axis metric');
+      select.setAttribute('aria-label', `${axis === 'x' ? 'X' : 'Y'} axis metric; scale 0 none to 3 high`);
       label.appendChild(select);
       foreignObject.appendChild(label);
       bindAxisSelect(axis, select);
@@ -436,9 +435,14 @@
     }
 
     function axialPlotBounds() {
-      return width < 680
-        ? { left: 104, right: 58, top: 78, bottom: 112 }
-        : { left: 126, right: 88, top: 86, bottom: 118 };
+      const horizontalMargin = width * .2;
+      const verticalMargin = height * .2;
+      return {
+        left: horizontalMargin,
+        right: horizontalMargin,
+        top: verticalMargin,
+        bottom: verticalMargin
+      };
     }
 
     function axialPositions(config) {
@@ -673,7 +677,6 @@
     }
 
     function setAxisLabels(config) {
-      axisLabels.classList.add('is-visible');
       starLegend.hidden = false;
       syncAxisSelects(config);
     }
@@ -724,28 +727,15 @@
       clusterIndicators = svgEl('g', { class: 'cluster-orbits', 'aria-hidden': 'true' });
       svg.appendChild(clusterIndicators);
 
-      axisLabels = svgEl('g', { class: 'axis-endpoints' });
-
       const xAxis = svgEl('g', { class: 'axis-guide axis-guide-x' });
       axisTooltip.bind(xAxis, () => architectureMetrics[axisConfig.x].description);
       xAxis.appendChild(axisSelectControl('x', { x: width / 2 - 110, y: height - 79, width: 220, height: 42 }));
-      xAxis.appendChild(svgEl('path', { d: `M ${width / 2 - 110} ${height - 40.5} L ${width / 2 + 110} ${height - 43.5} L ${width / 2 + 110} ${height - 34.5} L ${width / 2 - 110} ${height - 37.5} Z`, class: 'axis-ramp' }));
-      xAxis.appendChild(svgEl('text', { x: width / 2 - 120, y: height - 32, 'text-anchor': 'end', class: 'axis-endpoint' }));
-      xAxis.lastChild.textContent = '0 · None / NA';
-      xAxis.appendChild(svgEl('text', { x: width / 2 + 120, y: height - 32, 'text-anchor': 'start', class: 'axis-endpoint' }));
-      xAxis.lastChild.textContent = '3 · High';
-      axisLabels.appendChild(xAxis);
+      svg.appendChild(xAxis);
 
       const yAxis = svgEl('g', { class: 'axis-guide axis-guide-y', transform: `translate(55 ${height / 2}) rotate(-90)` });
       axisTooltip.bind(yAxis, () => architectureMetrics[axisConfig.y].description);
       yAxis.appendChild(axisSelectControl('y', { x: -110, y: -54, width: 220, height: 42 }));
-      yAxis.appendChild(svgEl('path', { d: 'M -110 -1.5 L 110 -4.5 L 110 4.5 L -110 1.5 Z', class: 'axis-ramp' }));
-      yAxis.appendChild(svgEl('text', { x: -120, y: 13, 'text-anchor': 'end', class: 'axis-endpoint' }));
-      yAxis.lastChild.textContent = '0 · None / NA';
-      yAxis.appendChild(svgEl('text', { x: 120, y: 13, 'text-anchor': 'start', class: 'axis-endpoint' }));
-      yAxis.lastChild.textContent = '3 · High';
-      axisLabels.appendChild(yAxis);
-      svg.appendChild(axisLabels);
+      svg.appendChild(yAxis);
 
       labs.forEach((lab, index) => {
         const funding = financing.get(lab.id);
@@ -877,12 +867,14 @@
       starGroups.forEach((group, labId) => group.classList.toggle('is-selected', labId === id));
       const lab = labById.get(id);
       query('#architecture-confidence').textContent = `${disclosureLabel(lab)} disclosure confidence`;
-      query('#architecture-name').textContent = lab.name;
+      const nameLink = query('#architecture-name');
+      nameLink.textContent = `${lab.name} ↗`;
+      nameLink.href = lab.website;
+      nameLink.setAttribute('aria-label', `Visit ${lab.name} website`);
       query('#architecture-note').textContent = lab.note;
-      const website = query('#architecture-website');
-      website.href = lab.website;
-      website.setAttribute('aria-label', `Visit ${lab.name} website`);
-      renderCitations(query('#architecture-citations'), insightIdsForLab(lab));
+      const citations = query('#architecture-citations');
+      renderCitations(citations, insightIdsForLab(lab));
+      citations.classList.add('space-citations');
       const profile = query('#architecture-profile');
       profile.replaceChildren();
       const funding = financing.get(lab.id);
@@ -902,30 +894,25 @@
       });
       const fundingTimeline = query('#architecture-funding');
       fundingTimeline.replaceChildren();
-      const fundingHeading = document.createElement('strong');
-      fundingHeading.className = 'funding-heading';
-      fundingHeading.textContent = 'Funding progression';
-      fundingTimeline.appendChild(fundingHeading);
-      const fundingList = document.createElement('div');
-      fundingList.className = 'funding-list';
-      [...(lab.fundingHistory || [])].sort((a, b) => a.date.localeCompare(b.date)).forEach(event => {
-        const row = document.createElement('div');
-        row.className = 'funding-event';
-        const date = document.createElement('span');
-        date.className = 'funding-date';
-        date.textContent = event.date.slice(0, 4);
-        const round = document.createElement('span');
-        round.className = 'funding-round';
+      const fundingTable = document.createElement('table');
+      fundingTable.className = 'funding-table';
+      fundingTable.innerHTML = '<caption>Funding history</caption><thead><tr><th scope="col">Time</th><th scope="col">Round</th><th scope="col">Raised</th><th scope="col">Valuation</th></tr></thead>';
+      const fundingBody = document.createElement('tbody');
+      [...(lab.fundingHistory || [])].sort((a, b) => b.date.localeCompare(a.date)).forEach(event => {
+        const row = document.createElement('tr');
+        const date = document.createElement('td');
+        date.textContent = event.date.slice(0, 7).replace('-', '.');
+        const round = document.createElement('td');
         round.textContent = event.round;
-        const amount = document.createElement('strong');
+        const amount = document.createElement('td');
         amount.textContent = formatUsd(event.amountRaisedUsd);
-        const valuation = document.createElement('span');
-        valuation.className = 'funding-valuation';
-        valuation.textContent = event.valuationUsd ? `${formatUsd(event.valuationUsd)} valuation` : 'valuation undisclosed';
+        const valuation = document.createElement('td');
+        valuation.textContent = event.valuationUsd ? formatUsd(event.valuationUsd) : 'Undisclosed';
         row.append(date, round, amount, valuation);
-        fundingList.appendChild(row);
+        fundingBody.appendChild(row);
       });
-      fundingTimeline.appendChild(fundingList);
+      fundingTable.appendChild(fundingBody);
+      fundingTimeline.appendChild(fundingTable);
       Object.keys(architectureMetrics).forEach(key => {
         const metric = document.createElement('div');
         metric.className = 'star-metric';
@@ -1593,14 +1580,6 @@
       if (activeLabId) allEdges.filter(edge => edge.lab.id === activeLabId).forEach(edge => edgeGroup.appendChild(edge.path));
     }
 
-    function scoreSummary(lab) {
-      const labels = [
-        ['readiness', 'readiness'], ['capability', 'target'], ['dataEfficiency', 'data'],
-        ['computeEfficiency', 'compute'], ['adaptivity', 'adapt'], ['controllability', 'control']
-      ];
-      return labels.map(([key, label]) => `${label} ${analysisScore(lab, key)}`).join(' · ');
-    }
-
     function appendPanelHeader(titleText, tagText, color) {
       const row = document.createElement('div');
       row.className = 'web-panel-title-row';
@@ -1622,63 +1601,26 @@
       return paragraph;
     }
 
-    function renderRoute(lab) {
-      const route = document.createElement('div');
-      route.className = 'web-panel-route';
-      const activeNodeIds = nodeIdsForLab(lab.id);
-      layers.forEach((layer, index) => {
-        const stationIds = nodes.filter(node => node.layer === layer.id && activeNodeIds.has(node.id)).map(node => node.id);
-        const group = document.createElement('span');
-        group.className = 'web-route-station-group';
-        stationIds.forEach((nodeId, stationIndex) => {
-          const station = document.createElement('span');
-          station.className = `web-route-station${nodeById.get(nodeId).unknown ? ' is-unknown' : ''}`;
-          station.textContent = nodeById.get(nodeId).label;
-          group.appendChild(station);
-          if (stationIndex < stationIds.length - 1) group.appendChild(document.createTextNode(' + '));
-        });
-        route.appendChild(group);
-        if (index < layers.length - 1) {
-          const arrow = document.createElement('span');
-          arrow.className = 'web-route-arrow';
-          arrow.textContent = '→';
-          route.appendChild(arrow);
-        }
-      });
-      return route;
-    }
-
     function renderPanel() {
       panel.replaceChildren();
       if (!selectedLabId) {
         appendPanelHeader('All lines', 'reading the full map', 'var(--primary)');
-        const first = document.createElement('div');
-        first.className = 'web-panel-copy';
-        first.appendChild(appendParagraph('The map narrows as it moves right. Labs spread across many data and architecture choices, but routes converge on a smaller set of deployment surfaces and consequences. Differentiation is concentrated in the first three layers; implications are often shared.'));
-        const second = document.createElement('div');
-        second.className = 'web-panel-copy';
-        second.appendChild(appendParagraph('Watch the learning-loop layer. Static pretrain-and-release systems share the field with bets on customization, world-model planning, open-ended evolution, recursive improvement, and test-time search. That is where the most consequential technical divergence sits.'));
+        const first = appendParagraph('The map narrows as it moves right. Labs spread across many data and architecture choices, but routes converge on a smaller set of deployment surfaces and consequences. Differentiation is concentrated in the first three layers; implications are often shared.');
+        const second = appendParagraph('Watch the learning-loop layer. Static pretrain-and-release systems share the field with bets on customization, world-model planning, open-ended evolution, recursive improvement, and test-time search. That is where the most consequential technical divergence sits.');
         const footer = document.createElement('div');
         footer.className = 'web-panel-scores';
-        footer.textContent = 'Select a lab to isolate its routes, commentary, and six-axis analyst profile.';
+        footer.textContent = 'Select a lab to isolate its commentary and sources.';
         panel.append(first, second, footer);
         return;
       }
       const lab = labById.get(selectedLabId);
       appendPanelHeader(lab.name, graph.labMeta?.[lab.id]?.tag || 'projected technology route', colorFor(lab));
-      const commentary = document.createElement('div');
-      commentary.className = 'web-panel-copy';
-      commentary.appendChild(appendParagraph(lab.note));
-      if (graph.labNarratives?.[lab.id]) commentary.appendChild(appendParagraph(graph.labNarratives[lab.id]));
+      const commentary = [appendParagraph(lab.note)];
+      if (graph.labNarratives?.[lab.id]) commentary.push(appendParagraph(graph.labNarratives[lab.id]));
       const sources = document.createElement('div');
       sources.className = 'web-panel-sources';
-      renderCitations(sources, insightIdsForLab(lab), 'Lab sources');
-      const scores = document.createElement('div');
-      scores.className = 'web-panel-scores';
-      const strong = document.createElement('strong');
-      strong.textContent = 'Axis scores';
-      scores.append(strong, document.createTextNode(` — ${scoreSummary(lab)}`));
-      panel.append(commentary, renderRoute(lab), scores, sources);
+      renderCitations(sources, insightIdsForLab(lab), 'Sources');
+      panel.append(...commentary, sources);
     }
 
     const allButton = document.createElement('button');
