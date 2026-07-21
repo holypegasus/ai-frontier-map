@@ -303,57 +303,19 @@ body[data-page="space"] .view-nav a.is-current { background: rgb(179 211 255 / 9
   z-index: 1;
   height: 100%;
 }
-.architecture-svg .axis-select-foreign { overflow: visible; }
-.architecture-svg .axis-select-control {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-.architecture-svg .axis-select {
-  width: 100%;
-  height: 2.05rem;
-  padding: .28rem 1.65rem .28rem .55rem;
-  border: 1px solid rgb(179 211 255 / 16%);
-  border-radius: 8px;
-  background: rgb(9 15 29 / 78%);
-  color: var(--foreground);
-  font: 500 .72rem/1.2 var(--font);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  backdrop-filter: blur(12px);
-}
-.space-x-axis-overlay {
-  position: absolute;
-  top: calc(90% - 2.05rem);
-  left: 50%;
-  z-index: 7;
-  width: 220px;
-  height: 2.05rem;
-  transform: translateX(-50%);
-}
-.space-x-axis-control { display: block; width: 100%; height: 100%; }
-.space-x-axis-overlay .axis-select {
-  width: 100%;
-  height: 2.05rem;
-  padding: .28rem 1.65rem .28rem .55rem;
-  border: 1px solid rgb(179 211 255 / 16%);
-  border-radius: 8px;
-  background: rgb(9 15 29 / 78%);
-  color: var(--foreground);
-  font: 500 .72rem/1.2 var(--font);
-  letter-spacing: .06em;
-  text-transform: uppercase;
-  backdrop-filter: blur(12px);
-}
 .architecture-svg .background-stars { pointer-events: none; }
 .architecture-svg .background-star { fill: rgb(219 235 255); }
 .architecture-svg .background-star.is-twinkling { animation: background-star-twinkle var(--twinkle-duration) ease-in-out var(--twinkle-delay) infinite; }
-.architecture-svg .cluster-orbits { pointer-events: none; }
-.architecture-svg .cluster-orbit-ring,
-.architecture-svg .cluster-orbit-sweep { fill: none; vector-effect: non-scaling-stroke; }
-.architecture-svg .cluster-orbit-ring { stroke: var(--foreground); stroke-width: 1; stroke-dasharray: 2 8; stroke-linecap: round; opacity: .13; }
-.architecture-svg .cluster-orbit-sweep { stroke: var(--primary); stroke-width: 1.2; stroke-dasharray: 1 18; stroke-linecap: round; opacity: .2; animation: cluster-orbit-dash 16s linear infinite; }
-.architecture-svg .cluster-orbit.is-frozen .cluster-orbit-sweep { animation-play-state: paused; }
+.architecture-svg .galactic-nebula,
+.architecture-svg .nebula-trails { pointer-events: none; mix-blend-mode: screen; }
+.architecture-svg .galactic-core-haze { fill: url(#galactic-core-gradient); filter: url(#nebula-soft); opacity: .85; }
+.architecture-svg .system-orbits { pointer-events: none; }
+.architecture-svg .system-orbit-ring { fill: none; stroke: url(#orbit-depth-gradient); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.architecture-svg .system-orbit-ring:nth-child(3n) { stroke-dasharray: 2 7; }
+.architecture-svg .system-barycenter { fill: rgb(225 242 255 / 72%); filter: url(#star-glow); }
+.architecture-svg .star-nebula-trail { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.architecture-svg .star-nebula-fog { stroke-width: 9; opacity: .18; filter: url(#nebula-soft); }
+.architecture-svg .star-nebula-filament { stroke-width: 1.1; stroke-dasharray: 1 8; opacity: .24; animation: nebula-flow 3.8s linear infinite; }
 .architecture-svg .star-point { cursor: pointer; }
 .architecture-svg .star-halo { fill: var(--star-color); opacity: .13; filter: url(#star-gas); transition: opacity 250ms ease; }
 .architecture-svg .star-core { fill: var(--star-color); stroke: rgb(255 255 255 / 76%); stroke-width: .8; filter: url(#star-glow); transition: opacity 250ms ease; vector-effect: non-scaling-stroke; }
@@ -369,14 +331,14 @@ body[data-page="space"] .view-nav a.is-current { background: rgb(179 211 255 / 9
 .architecture-svg .confidence-2 .star-halo { opacity: .2; }
 .architecture-svg .confidence-1 .star-core { opacity: .46; filter: url(#star-gas); }
 .architecture-svg .confidence-1 .star-halo { opacity: .31; }
-.architecture-stage .star-drift { animation: none; transform: translate(0); }
-@keyframes star-drift { from { transform: translate(0, 0); } to { transform: translate(var(--drift-x), var(--drift-y)); } }
-@keyframes cluster-orbit-dash { to { stroke-dashoffset: -152; } }
 @keyframes background-star-twinkle { 0%, 100% { opacity: calc(var(--star-opacity) * .55); } 50% { opacity: var(--star-opacity); } }
+@keyframes nebula-flow { to { stroke-dashoffset: -36; } }
 .star-detail {
   position: absolute;
   z-index: 5;
   width: min(21rem, calc(100% - 1.5rem));
+  max-height: calc(100% - 1.5rem);
+  overflow: auto;
   padding: 1rem;
   border: 1px solid rgb(179 211 255 / 13%);
   border-radius: 15px;
@@ -389,12 +351,31 @@ body[data-page="space"] .view-nav a.is-current { background: rgb(179 211 255 / 9
 .star-detail-title-link { color: var(--foreground); text-decoration: none; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .star-detail-title-link:hover { color: var(--primary); text-decoration: underline; }
 .star-detail p { margin-bottom: .85rem; color: rgb(239 245 255 / 82%); font-size: .86rem; line-height: 1.5; }
+.star-related-views { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; margin: .1rem 0 .85rem; }
+.mini-view-card { display: grid; gap: .2rem; min-width: 0; padding: .42rem .42rem .28rem; border: 1px solid rgb(179 211 255 / 14%); border-radius: 9px; background: rgb(18 29 52 / 34%); color: var(--foreground); text-decoration: none; transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease; }
+.mini-view-card:hover, .mini-view-card:focus-visible { border-color: rgb(179 211 255 / 42%); background: rgb(31 50 84 / 48%); transform: translateY(-1px); }
+.mini-view-label { color: var(--muted); font-size: .65rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.mini-view-svg { display: block; width: 100%; height: 4.65rem; overflow: visible; }
+.mini-radar-grid { fill: none; stroke: rgb(179 211 255 / 17%); stroke-width: .7; vector-effect: non-scaling-stroke; }
+.mini-radar-profile { fill: color-mix(in srgb, var(--mini-lab-color) 28%, transparent); stroke: var(--mini-lab-color); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.mini-radar-point { fill: var(--mini-lab-color); }
+.mini-web-column { stroke: rgb(179 211 255 / 11%); stroke-width: .7; vector-effect: non-scaling-stroke; }
+.mini-web-edge { stroke: var(--primary); stroke-width: 1; opacity: .48; vector-effect: non-scaling-stroke; }
+.mini-web-node { fill: var(--foreground); opacity: .82; }
+.mini-web-node.is-unknown { fill: none; stroke: var(--muted); stroke-dasharray: 1 1; stroke-width: .8; }
 .star-detail-kicker { color: var(--primary); font-size: .7rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
 .star-detail-close { position: absolute; top: .6rem; right: .65rem; width: 1.8rem; height: 1.8rem; border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 1.25rem; }
 .star-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; margin-bottom: .85rem; }
 .star-metric { display: grid; gap: .06rem; min-width: 0; }
 .star-metric span { overflow: hidden; color: var(--muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
 .star-metric strong { font-size: .84rem; font-weight: 500; }
+.star-people { margin: .1rem 0 .85rem; padding-top: .65rem; border-top: 1px solid var(--border); }
+.star-people h3 { margin: 0 0 .55rem; color: var(--muted); font-size: .68rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.star-people .radar-people { gap: .58rem; }
+.star-people .radar-person-heading { gap: .32rem .45rem; }
+.star-people .radar-person-heading strong { font-size: .78rem; }
+.star-people .radar-person-role { font-size: .68rem; }
+.star-people .radar-people small { font-size: .68rem; }
 .funding-table-wrap { margin: .1rem 0 .85rem; border-top: 1px solid var(--border); }
 .funding-table { width: 100%; border-collapse: collapse; font-size: .68rem; }
 .funding-table caption { padding: .55rem 0 .28rem; color: var(--muted); font-size: .68rem; font-weight: 500; letter-spacing: .06em; text-align: left; text-transform: uppercase; }
@@ -403,7 +384,6 @@ body[data-page="space"] .view-nav a.is-current { background: rgb(179 211 255 / 9
 .funding-table td:first-child { color: var(--muted); }
 .funding-table td:nth-child(3), .funding-table td:nth-child(4) { text-align: right; }
 .funding-table td:nth-child(4) { color: var(--muted); }
-.space-citations.citation-reveal { max-height: 8rem; margin-top: .85rem; opacity: 1; pointer-events: auto; transform: translateY(0); }
 .citation-reveal { max-height: 0; margin-top: .7rem; overflow: hidden; border-top: 1px solid var(--border); opacity: 0; pointer-events: none; transform: translateY(-4px); transition: max-height 180ms ease, opacity 180ms ease, transform 180ms ease; }
 .star-detail:hover .citation-reveal, .star-detail:focus-within .citation-reveal { max-height: 8rem; opacity: 1; pointer-events: auto; transform: translateY(0); }
 .citation-heading { display: block; padding-top: .55rem; color: var(--muted); font-size: .68rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
@@ -417,7 +397,7 @@ body[data-page="space"].space-chrome-visible .star-legend { opacity: 1; pointer-
 .star-key-core { background: rgb(225 242 255); box-shadow: 0 0 7px var(--primary); }
 .star-key-halo { border: 1px solid rgb(149 205 255 / 48%); background: rgb(149 205 255 / 12%); box-shadow: 0 0 8px 3px rgb(149 205 255 / 15%); }
 .star-key-gas { background: rgb(149 205 255 / 42%); box-shadow: 0 0 8px 4px rgb(149 205 255 / 24%); }
-.star-age-scale { display: inline-block; width: 2.2rem; height: .42rem; border-radius: 999px; background: linear-gradient(90deg, rgb(151 207 255), rgb(246 235 198), rgb(255 157 82)); }
+.star-age-scale { display: inline-block; width: 2.2rem; height: .42rem; border-radius: 999px; background: linear-gradient(90deg, rgb(255 157 82), rgb(246 235 198), rgb(151 207 255)); }
 .space-last-updated { position: absolute; right: 1rem; bottom: .85rem; z-index: 6; margin: 0; font-size: .72rem; opacity: 0; pointer-events: none; filter: blur(3px); transform: translateY(7px); transition: opacity 280ms ease, filter 280ms ease, transform 280ms ease; }
 body[data-page="space"].space-chrome-visible .space-last-updated { opacity: 1; pointer-events: auto; filter: none; transform: translateY(0); }
 .space-chrome-cue { position: fixed; top: 0; left: 50%; z-index: 21; width: 3.5rem; height: 2px; border-radius: 0 0 999px 999px; background: var(--primary); box-shadow: 0 0 12px rgb(149 205 255 / 58%); opacity: .36; pointer-events: none; transform: translateX(-50%); transition: opacity 200ms ease, width 200ms ease; }
@@ -427,7 +407,6 @@ body[data-page="space"].space-chrome-visible .space-chrome-cue { width: 6rem; op
   .star-legend { right: .5rem; bottom: 2.45rem; left: .5rem; gap: .3rem .7rem; }
   .space-last-updated { right: auto; bottom: .55rem; left: 50%; transform: translate(-50%, 7px); white-space: nowrap; }
   body[data-page="space"].space-chrome-visible .space-last-updated { transform: translate(-50%, 0); }
-  .architecture-svg .axis-select { padding-inline: .42rem 1.35rem; font-size: .66rem; }
   .star-detail { padding: .9rem; }
 }
 @media (hover: none), (pointer: coarse) {
@@ -599,7 +578,6 @@ body.has-web-selection .web-legend .web-lab-chip:not([aria-pressed="true"]) { op
 }
 @media (prefers-reduced-motion: reduce) {
   .map-card, .web-lab-chip, .web-route-edge, .web-route-node rect { transition: none; }
-  .architecture-svg .cluster-orbit-sweep { animation: none; }
-  .architecture-svg .background-star { animation: none; }
+  .architecture-svg .background-star, .architecture-svg .star-nebula-filament { animation: none; }
   body[data-page="space"] .site-header, .star-legend, .space-last-updated, .space-chrome-cue { transition: none; }
 }

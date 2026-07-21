@@ -18,11 +18,6 @@
     return match ? { year: Number(match[1]), month: match[2] ? Number(match[2]) : 13 } : { year: -Infinity, month: -Infinity };
   }
 
-  function parseFormationTime(lab) {
-    const value = Number.parseFloat(lab.formation?.time);
-    return Number.isFinite(value) ? value : -Infinity;
-  }
-
   const allLabs = dataset.labs.slice().sort(compareLabsByFormation);
   const labById = new Map(allLabs.map(lab => [lab.id, lab]));
   const shortLabName = lab => lab.shortName || lab.name;
@@ -76,12 +71,6 @@
   function selectionHref(target, ids, focusId = readFocus(ids)) {
     const params = new URLSearchParams();
     if (focusId && labById.has(focusId)) params.set('focus', focusId);
-    if (target === 'index.html' && page === 'space') {
-      const current = new URLSearchParams(window.location.search);
-      ['x', 'y'].forEach(key => {
-        if (current.has(key)) params.set(key, current.get(key));
-      });
-    }
     const query = params.toString();
     return `${target}${query ? `?${query}` : ''}`;
   }
@@ -201,6 +190,33 @@
     container.appendChild(list);
   }
 
+  function renderPeopleList(lab) {
+    const peopleList = document.createElement('ul');
+    peopleList.className = 'radar-people';
+    (lab.keyPeople || []).forEach(person => {
+      const item = document.createElement('li');
+      const heading = document.createElement('div');
+      heading.className = 'radar-person-heading';
+      const personName = document.createElement('strong');
+      personName.className = 'radar-person-full';
+      personName.textContent = person.name;
+      const lastName = document.createElement('span');
+      lastName.className = 'radar-person-last';
+      const nameParts = person.name.trim().split(/\s+/);
+      lastName.textContent = nameParts[nameParts.length - 1];
+      lastName.setAttribute('aria-label', person.name);
+      const role = document.createElement('span');
+      role.className = 'radar-person-role';
+      role.textContent = person.role;
+      heading.append(personName, lastName, role);
+      const experience = document.createElement('small');
+      experience.textContent = (person.pastExperiences || []).join(' · ');
+      item.append(heading, experience);
+      peopleList.appendChild(item);
+    });
+    return peopleList;
+  }
+
   function svgEl(tag, attrs = {}) {
     const node = document.createElementNS(SVG_NS, tag);
     Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
@@ -249,110 +265,90 @@
     return { bind, hide };
   }
 
-  function initIndex() {
-    const ids = allLabs.map(lab => lab.id);
-    const focusId = readFocus(ids);
-    writeFocus(focusId, { updateUrl: false });
-    updateViewLinks(ids, focusId);
-  }
-
   const architectureMetrics = Object.fromEntries(Object.entries(dataset.schema?.analysisAxes || {}).map(([key, metric]) => [key, {
     label: metric.label,
-    low: metric.low,
-    high: metric.high,
     description: metric.hoverText
   }]));
   function initArchitecture() {
     const ids = readSelection();
     const labs = selectedLabs(ids);
-    updateViewLinks(ids);
-    const svg = document.querySelector('.architecture-svg');
-    const stage = document.querySelector('#architecture-stage');
-    const detail = document.querySelector('#architecture-detail');
-    const detailClose = document.querySelector('#architecture-detail-close');
-    const xAxisOverlay = document.querySelector('#space-x-axis-overlay');
-    const axisSelects = { x: null, y: null };
-    const axisTooltip = createDelayedTooltip();
-    const starLegend = document.querySelector('.star-legend');
-    const spaceHeader = document.querySelector('body[data-page="space"] .site-header');
-    const spaceLastUpdated = document.querySelector('.space-last-updated');
+    const svg = query('.architecture-svg');
+    const stage = query('#architecture-stage');
+    const detail = query('#architecture-detail');
+    const detailClose = query('#architecture-detail-close');
+    const starLegend = query('.star-legend');
+    const spaceHeader = query('body[data-page="space"] .site-header');
+    const spaceLastUpdated = query('.space-last-updated');
     const spaceChromeParts = [spaceHeader, starLegend, spaceLastUpdated].filter(Boolean);
     const initialFocus = readFocus(ids);
-    let selectedId = labs.some(lab => lab.id === initialFocus) ? initialFocus : labs[0].id;
-    let axisConfig = { x: 'readiness', y: 'capability' };
+    const financing = new Map(labs.map(lab => [lab.id, fundingSummary(lab)]));
+    const maxRaised = Math.max(1, ...[...financing.values()].map(item => item.totalRaised));
+    const maxValuation = Math.max(1, ...[...financing.values()].map(item => item.latestValuation));
+    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const precisePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const starGroups = new Map();
+    const orbitBodies = new Map();
+    const nebulaTrails = new Map();
+    const orbitTilt = 0.64;
+    const perspectiveStrength = 0.16;
+    let selectedId = labs.some(lab => lab.id === initialFocus) ? initialFocus : labs[0]?.id;
     let width = 0;
     let height = 0;
+    let center = { x: 0, y: 0 };
+    let motionFrame = null;
+    let lastMotionTime = 0;
+    let detailFrame = null;
     let detailOpen = false;
     let detailMode = 'closed';
     let pinnedId = null;
     let hoverStarId = null;
     let detailHovered = false;
     let hoverCloseTimer = null;
-    let animationFrame = null;
-    let clusterFrame = null;
-    let activeClusters = new Map();
-    let detailFrame = null;
-    let currentPositions = new Map();
-    let backgroundFar = null;
-    let backgroundNear = null;
     let chromeHideTimer = null;
     let lastPointerY = Number.POSITIVE_INFINITY;
-    const starGroups = new Map();
-    const starRadii = new Map();
-    let clusterIndicators = null;
-    const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const precisePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    const legacyViews = {
-      market: { x: 'readiness', y: 'capability' },
-      learning: { x: 'adaptivity', y: 'dataEfficiency' },
-      resources: { x: 'dataEfficiency', y: 'computeEfficiency' }
-    };
-    const metricKeys = Object.keys(architectureMetrics);
-    axisConfig = readArchitectureAxes();
-    if (new URLSearchParams(window.location.search).has('view')) writeArchitectureAxes(axisConfig);
-    const financing = new Map(labs.map(lab => [lab.id, fundingSummary(lab)]));
-    const maxRaised = Math.max(1, ...[...financing.values()].map(item => item.totalRaised));
-    const maxValuation = Math.max(1, ...[...financing.values()].map(item => item.latestValuation));
 
-    function bindAxisSelect(axis, select) {
-      axisSelects[axis] = select;
-      metricKeys.forEach(key => {
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = architectureMetrics[key].label;
-        select.appendChild(option);
-      });
-      select.value = axisConfig[axis];
-      select.addEventListener('change', () => {
-        const nextConfig = normalizeAxisConfig({
-          ...axisConfig,
-          [axis]: select.value
-        }, axis);
-        syncAxisSelects(nextConfig);
-        if (nextConfig.x === axisConfig.x && nextConfig.y === axisConfig.y) return;
-        transitionAxes(nextConfig);
-      });
+    const params = new URLSearchParams(window.location.search);
+    const hadLegacyAxes = ['x', 'y', 'view'].some(key => params.has(key));
+    ['x', 'y', 'view'].forEach(key => params.delete(key));
+    if (hadLegacyAxes) {
+      const cleanQuery = params.toString();
+      window.history.replaceState(null, '', `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}${window.location.hash}`);
+    }
+    updateViewLinks(ids, selectedId);
+
+    function hash(text) {
+      let value = 2166136261;
+      for (let index = 0; index < text.length; index += 1) {
+        value ^= text.charCodeAt(index);
+        value = Math.imul(value, 16777619);
+      }
+      return value >>> 0;
     }
 
-    detailClose.addEventListener('click', event => {
-      event.stopPropagation();
-      closeDetail();
-    });
-    detail.addEventListener('pointerenter', () => {
-      detailHovered = true;
-      clearHoverClose();
-    });
-    detail.addEventListener('pointerleave', () => {
-      detailHovered = false;
-      scheduleHoverClose();
-    });
-    stage.addEventListener('click', event => {
-      if (event.target === svg) closeDetail();
-    });
-    window.addEventListener('keydown', event => {
-      if (event.key !== 'Escape' || !detailOpen) return;
-      closeDetail();
-    });
+    function formationTimelineValue(lab) {
+      const key = formationSortKey(lab);
+      if (!Number.isFinite(key.year)) return NaN;
+      const monthIndex = key.month === 13 ? 11.9 : Math.max(0, key.month - 1);
+      return key.year + monthIndex / 12;
+    }
+
+    function stellarColor(time) {
+      const times = labs.map(formationTimelineValue).filter(Number.isFinite);
+      const newest = Math.max(...times);
+      const oldest = Math.min(...times);
+      const progress = newest === oldest ? 0 : Math.max(0, Math.min(1, (newest - time) / (newest - oldest)));
+      const stops = progress < 0.5
+        ? { from: [151, 207, 255], to: [246, 235, 198], mix: progress * 2 }
+        : { from: [246, 235, 198], to: [255, 157, 82], mix: (progress - 0.5) * 2 };
+      const rgb = stops.from.map((value, index) => Math.round(value + (stops.to[index] - value) * stops.mix));
+      return `rgb(${rgb.join(' ')})`;
+    }
+
+    function formatUsd(value) {
+      if (!Number.isFinite(value) || value <= 0) return 'Undisclosed';
+      if (value >= 1000000000) return `$${(value / 1000000000).toFixed(2).replace(/\.?0+$/, '')}B`;
+      return `$${(value / 1000000).toFixed(1).replace(/\.?0+$/, '')}M`;
+    }
 
     function clearChromeHide() {
       if (!chromeHideTimer) return;
@@ -397,415 +393,139 @@
     });
     window.addEventListener('keydown', event => {
       if (event.key === 'Tab') revealChrome();
+      if (event.key === 'Escape' && detailOpen) closeDetail();
     });
 
-    function normalizeAxisConfig(config, changedAxis = 'x') {
-      const fallback = { x: 'readiness', y: 'capability' };
-      const next = {
-        x: metricKeys.includes(config.x) ? config.x : fallback.x,
-        y: metricKeys.includes(config.y) ? config.y : fallback.y
-      };
-      if (next.x !== next.y) return next;
-      const axisToChange = changedAxis === 'x' ? 'y' : 'x';
-      next[axisToChange] = metricKeys.find(key => key !== next[changedAxis]) || fallback[axisToChange];
-      return next;
-    }
+    detailClose.addEventListener('click', event => {
+      event.stopPropagation();
+      closeDetail();
+    });
+    detail.addEventListener('pointerenter', () => {
+      detailHovered = true;
+      clearHoverClose();
+    });
+    detail.addEventListener('pointerleave', () => {
+      detailHovered = false;
+      scheduleHoverClose();
+    });
+    stage.addEventListener('click', event => {
+      if (!event.target.closest('.star-point') && !event.target.closest('.star-detail')) closeDetail();
+    });
 
-    function readArchitectureAxes() {
-      const params = new URLSearchParams(window.location.search);
-      const legacyView = params.get('view');
-      const legacyConfig = legacyViews[legacyView] || {};
-      return normalizeAxisConfig({
-        x: params.get('x') || legacyConfig.x || 'readiness',
-        y: params.get('y') || legacyConfig.y || 'capability'
-      });
-    }
-
-    function writeArchitectureAxes(nextConfig) {
-      const params = new URLSearchParams(window.location.search);
-      params.delete('view');
-      params.set('x', nextConfig.x);
-      params.set('y', nextConfig.y);
-      const query = params.toString();
-      const nextUrl = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
-      window.history.replaceState(null, '', nextUrl);
-    }
-
-    function syncAxisSelects(nextConfig) {
-      Object.entries(axisSelects).forEach(([axis, select]) => {
-        if (!select) return;
-        select.value = nextConfig[axis];
-        select.removeAttribute('title');
-        [...select.options].forEach(option => {
-          option.disabled = option.value === nextConfig[axis === 'x' ? 'y' : 'x'];
+    function configureOrbits() {
+      orbitBodies.clear();
+      const chronological = labs.slice().sort(compareLabsByFormation);
+      const finiteTimes = chronological.map(formationTimelineValue).filter(Number.isFinite);
+      const oldest = Math.min(...finiteTimes);
+      const newest = Math.max(...finiteTimes);
+      const maxHaloRadius = Math.max(...labs.map(lab => {
+        const funding = financing.get(lab.id);
+        const coreRadius = 4.5 + 9.5 * Math.sqrt(funding.totalRaised / maxRaised);
+        return coreRadius + 5 + 20 * Math.sqrt(funding.latestValuation / maxValuation);
+      }));
+      const horizontalLimit = width / 2 - maxHaloRadius - Math.max(24, width * 0.035);
+      const verticalClearance = Math.max(86, height * 0.15);
+      const verticalLimit = (height / 2 - maxHaloRadius - verticalClearance) / orbitTilt;
+      const outerRadius = Math.max(72, Math.min(horizontalLimit, verticalLimit));
+      const innerRadius = Math.max(34, Math.min(72, outerRadius * 0.24));
+      chronological.forEach((lab, rank) => {
+        const time = formationTimelineValue(lab);
+        const timeProgress = Number.isFinite(time) && newest !== oldest ? (time - oldest) / (newest - oldest) : 0;
+        const rankProgress = chronological.length > 1 ? rank / (chronological.length - 1) : 0;
+        const progress = timeProgress * 0.72 + rankProgress * 0.28;
+        const radius = innerRadius + progress * (outerRadius - innerRadius);
+        orbitBodies.set(lab.id, {
+          angle: (hash(`${lab.id}-orbit`) % 3600) / 3600 * Math.PI * 2,
+          radius,
+          angularSpeed: 0.13 * Math.sqrt(innerRadius / radius),
+          formationTime: time
         });
       });
     }
 
-    function axisSelectControl(axis, attrs) {
-      const foreignObject = svgEl('foreignObject', {
-        ...attrs,
-        class: `axis-select-foreign axis-select-foreign-${axis}`
-      });
-      const label = document.createElement('label');
-      label.className = `axis-select-control axis-select-control-${axis}`;
-      const select = document.createElement('select');
-      select.className = 'axis-select';
-      select.dataset.axisSelect = axis;
-      select.setAttribute('aria-label', `${axis === 'x' ? 'X' : 'Y'} axis metric; scale 0 none to 3 high`);
-      label.appendChild(select);
-      foreignObject.appendChild(label);
-      bindAxisSelect(axis, select);
-      axisTooltip.bind(foreignObject, () => architectureMetrics[axisConfig[axis]].description);
-      axisTooltip.bind(select, () => architectureMetrics[axisConfig[axis]].description);
-      return foreignObject;
-    }
-
-    function hash(text) {
-      let value = 2166136261;
-      for (let index = 0; index < text.length; index += 1) {
-        value ^= text.charCodeAt(index);
-        value = Math.imul(value, 16777619);
-      }
-      return value >>> 0;
-    }
-
-    function stellarColor(time) {
-      const times = labs.map(parseFormationTime).filter(Number.isFinite);
-      const newest = Math.max(...times);
-      const oldest = Math.min(...times);
-      const progress = newest === oldest ? 0 : Math.max(0, Math.min(1, (newest - time) / (newest - oldest)));
-      const stops = progress < 0.5
-        ? { from: [151, 207, 255], to: [246, 235, 198], mix: progress * 2 }
-        : { from: [246, 235, 198], to: [255, 157, 82], mix: (progress - 0.5) * 2 };
-      const rgb = stops.from.map((value, index) => Math.round(value + (stops.to[index] - value) * stops.mix));
-      return `rgb(${rgb.join(' ')})`;
-    }
-
-    function formatUsd(value) {
-      if (!Number.isFinite(value) || value <= 0) return 'Undisclosed';
-      if (value >= 1000000000) return `$${(value / 1000000000).toFixed(2).replace(/\.?0+$/, '')}B`;
-      return `$${(value / 1000000).toFixed(1).replace(/\.?0+$/, '')}M`;
-    }
-
-    function axialPlotBounds() {
-      const horizontalMargin = Math.max(width * .1, 42);
-      const verticalMargin = Math.max(height * .12, 80);
+    function positionFor(body) {
       return {
-        left: horizontalMargin,
-        right: horizontalMargin,
-        top: verticalMargin,
-        bottom: verticalMargin
+        x: center.x + Math.cos(body.angle) * body.radius,
+        y: center.y + Math.sin(body.angle) * body.radius * orbitTilt
       };
     }
 
-    function axialPositions(config) {
-      const positions = new Map();
-      const bounds = axialPlotBounds();
-      const plotWidth = Math.max(1, width - bounds.left - bounds.right);
-      const plotHeight = Math.max(1, height - bounds.top - bounds.bottom);
-      labs.forEach(lab => {
-        positions.set(lab.id, {
-          x: bounds.left + (analysisScore(lab, config.x) / 3) * plotWidth,
-          y: height - bounds.bottom - (analysisScore(lab, config.y) / 3) * plotHeight
-        });
-      });
-      return positions;
-    }
-
-    function clusterFor(id) {
-      const lab = labById.get(id);
-      const xScore = analysisScore(lab, axisConfig.x);
-      const yScore = analysisScore(lab, axisConfig.y);
-      const key = `${axisConfig.x}:${axisConfig.y}:${xScore}|${yScore}`;
-      const idsAtPoint = labs
-        .filter(peer => analysisScore(peer, axisConfig.x) === xScore && analysisScore(peer, axisConfig.y) === yScore)
-        .map(peer => peer.id)
-        .sort((a, b) => a.localeCompare(b));
-      return idsAtPoint.length > 1 ? { key, ids: idsAtPoint } : null;
-    }
-
-    function clustersForCurrentAxes() {
-      const clusters = new Map();
-      labs.forEach(lab => {
-        const cluster = clusterFor(lab.id);
-        if (cluster) clusters.set(cluster.key, cluster);
-      });
-      return [...clusters.values()];
-    }
-
-    function createClusterState(cluster, now) {
-      const base = axialPositions(axisConfig).get(cluster.ids[0]);
-      const collisionRadius = Math.max(...cluster.ids.map(peerId => starRadii.get(peerId) || 16));
-      const spacing = collisionRadius * 2 + 8;
-      const orbitRadius = Math.max(28, spacing / (2 * Math.sin(Math.PI / cluster.ids.length)));
-      const margin = orbitRadius + collisionRadius + 10;
-      const center = {
-        x: base.x,
-        y: base.y
-      };
-      const barycentricSystem = cluster.ids.length > 1;
-      const orbitalBodies = new Map();
-      if (barycentricSystem) {
-        const orderedIds = cluster.ids.slice().sort((a, b) => compareLabsByFormation(labById.get(a), labById.get(b)));
-        let previousRadius = 0;
-        let previousStarRadius = 0;
-        orderedIds.forEach((peerId, index) => {
-          const starRadius = starRadii.get(peerId) || collisionRadius;
-          const orbitRadius = index === 0
-            ? Math.max(12, starRadius * .5)
-            : previousRadius + previousStarRadius + starRadius + Math.max(3, Math.min(previousStarRadius, starRadius) * .5);
-          orbitalBodies.set(peerId, {
-            angle: (hash(cluster.key) % 360) * Math.PI / 180 + index * Math.PI * 2 / orderedIds.length,
-            radius: orbitRadius,
-            angularSpeed: .3 / Math.sqrt(Math.max(1, orbitRadius / 38))
-          });
-          previousRadius = orbitRadius;
-          previousStarRadius = starRadius;
+    function nebulaWakeGeometry(body, span, phaseOffset, endInset = 0.035, turbulence = 1) {
+      const points = [];
+      const steps = 28;
+      for (let index = 0; index <= steps; index += 1) {
+        const progress = index / steps;
+        const angle = body.angle - span + (span - endInset) * progress;
+        const envelope = Math.sin(progress * Math.PI);
+        const wave = progress * Math.PI * 4 + phaseOffset + body.angle * 1.7;
+        const radialWobble = Math.sin(wave) * 2.4 * envelope * turbulence;
+        const crossWobble = Math.cos(wave * 0.73) * 1.2 * envelope * turbulence;
+        const radius = body.radius + radialWobble;
+        points.push({
+          x: center.x + Math.cos(angle) * radius,
+          y: center.y + Math.sin(angle) * radius * orbitTilt + crossWobble
         });
       }
-      const particles = new Map();
-      cluster.ids.forEach((peerId, index) => {
-        const angle = index * Math.PI * 2 / cluster.ids.length + (hash(cluster.key) % 360) * Math.PI / 180;
-        const current = currentPositions.get(peerId) || base;
-        const initialRadius = Math.max(0.5, Math.hypot(current.x - center.x, current.y - center.y));
-        particles.set(peerId, {
-          x: current.x + Math.cos(angle) * 0.5,
-          y: current.y + Math.sin(angle) * 0.5,
-          vx: -Math.sin(angle) * initialRadius * 0.14,
-          vy: Math.cos(angle) * initialRadius * 0.14,
-          angle,
-          radius: starRadii.get(peerId) || collisionRadius,
-          mass: 0.7 + (starRadii.get(peerId) || collisionRadius) / 24
-        });
-        starGroups.get(peerId)?.classList.add('is-cluster-member');
-      });
+      const start = points[0];
+      const end = points[points.length - 1];
       return {
-        ...cluster,
-        base,
-        center,
-        barycentricSystem,
-        orbitalBodies,
-        particles,
-        orbitRadius,
-        started: now,
-        last: now,
-        frozen: false,
-        phase: 'expanding'
+        d: `M ${points.map(point => `${point.x} ${point.y}`).join(' L ')}`,
+        start,
+        end
       };
     }
 
-    function updateClusterFreezeState() {
-      activeClusters.forEach(cluster => {
-        cluster.frozen = detailOpen && cluster.ids.includes(selectedId);
-        cluster.indicator?.classList.toggle('is-frozen', cluster.frozen);
-      });
-    }
-
-    function renderClusterIndicators() {
-      if (!clusterIndicators) return;
-      clusterIndicators.replaceChildren();
-      activeClusters.forEach(cluster => {
-        const orbit = svgEl('g', { class: `cluster-orbit${cluster.frozen ? ' is-frozen' : ''}`, 'aria-hidden': 'true' });
-        if (cluster.barycentricSystem) {
-          cluster.orbitalBodies.forEach(body => {
-            orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: body.radius, class: 'cluster-orbit-ring' }));
-          });
-        } else {
-          orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: cluster.orbitRadius, class: 'cluster-orbit-ring' }));
-          orbit.appendChild(svgEl('circle', { cx: cluster.center.x, cy: cluster.center.y, r: cluster.orbitRadius, class: 'cluster-orbit-sweep' }));
+    function paintPositions() {
+      orbitBodies.forEach((body, id) => {
+        const position = positionFor(body);
+        const depth = Math.sin(body.angle);
+        const perspectiveScale = 1 + depth * perspectiveStrength;
+        const group = starGroups.get(id);
+        group?.setAttribute('transform', `translate(${position.x} ${position.y}) scale(${perspectiveScale})`);
+        if (group) group.style.opacity = String(0.78 + (depth + 1) * 0.11);
+        const trails = nebulaTrails.get(id);
+        if (trails) {
+          const fogGeometry = nebulaWakeGeometry(body, trails.span, trails.phaseOffset);
+          const filamentGeometry = nebulaWakeGeometry(body, trails.span * 0.72, trails.phaseOffset + 1.3, 0.055, 0.45);
+          trails.fog.setAttribute('d', fogGeometry.d);
+          trails.filament.setAttribute('d', filamentGeometry.d);
+          trails.gradient.setAttribute('x1', fogGeometry.start.x);
+          trails.gradient.setAttribute('y1', fogGeometry.start.y);
+          trails.gradient.setAttribute('x2', fogGeometry.end.x);
+          trails.gradient.setAttribute('y2', fogGeometry.end.y);
         }
-        cluster.indicator = orbit;
-        clusterIndicators.appendChild(orbit);
-      });
-    }
-
-    function startClusterMotion() {
-      stopClusterMotion(false);
-      const clusters = clustersForCurrentAxes();
-      if (!clusters.length || stage.classList.contains('is-transitioning')) return;
-      const now = performance.now();
-      activeClusters = new Map(clusters.map(cluster => [cluster.key, createClusterState(cluster, now)]));
-      updateClusterFreezeState();
-      renderClusterIndicators();
-
-      if (reducedMotion) {
-        activeClusters.forEach(cluster => {
-          if (cluster.barycentricSystem) {
-            cluster.orbitalBodies.forEach((body, peerId) => {
-              const position = {
-                x: cluster.center.x + Math.cos(body.angle) * body.radius,
-                y: cluster.center.y + Math.sin(body.angle) * body.radius
-              };
-              currentPositions.set(peerId, position);
-              starGroups.get(peerId)?.setAttribute('transform', `translate(${position.x} ${position.y})`);
-            });
-            cluster.phase = 'orbiting';
-            return;
-          }
-          cluster.ids.forEach(peerId => {
-            const particle = cluster.particles.get(peerId);
-            const position = {
-              x: cluster.center.x + Math.cos(particle.angle) * cluster.orbitRadius,
-              y: cluster.center.y + Math.sin(particle.angle) * cluster.orbitRadius
-            };
-            currentPositions.set(peerId, position);
-            starGroups.get(peerId)?.setAttribute('transform', `translate(${position.x} ${position.y})`);
-          });
-          cluster.phase = 'orbiting';
-        });
-        return;
-      }
-      clusterFrame = window.requestAnimationFrame(stepClusterMotion);
-    }
-
-    function stepClusterMotion(now) {
-      if (!activeClusters.size) return;
-      activeClusters.forEach(activeCluster => {
-        stepSingleCluster(activeCluster, now);
       });
       if (detailOpen) positionDetail();
-      clusterFrame = window.requestAnimationFrame(stepClusterMotion);
     }
 
-    function stepSingleCluster(activeCluster, now) {
-      if (activeCluster.frozen) {
-        activeCluster.last = now;
-        return;
-      }
-      const dt = Math.min(0.032, Math.max(0.008, (now - activeCluster.last) / 1000));
-      activeCluster.last = now;
-      const elapsed = now - activeCluster.started;
-      const expansion = Math.min(1, elapsed / 820);
-      const easedExpansion = 1 - Math.pow(1 - expansion, 3);
-      if (activeCluster.barycentricSystem) {
-        const centerProgress = easedExpansion;
-        const dynamicCenter = {
-          x: activeCluster.base.x + (activeCluster.center.x - activeCluster.base.x) * centerProgress,
-          y: activeCluster.base.y + (activeCluster.center.y - activeCluster.base.y) * centerProgress
-        };
-        activeCluster.orbitalBodies.forEach((body, id) => {
-          body.angle += body.angularSpeed * dt;
-          const position = {
-            x: dynamicCenter.x + Math.cos(body.angle) * body.radius * easedExpansion,
-            y: dynamicCenter.y + Math.sin(body.angle) * body.radius * easedExpansion
-          };
-          currentPositions.set(id, position);
-          starGroups.get(id)?.setAttribute('transform', `translate(${position.x} ${position.y})`);
-        });
-        if (expansion >= 1) activeCluster.phase = 'orbiting';
-        return;
-      }
-      const desiredRadius = activeCluster.orbitRadius * easedExpansion;
-      const centerProgress = easedExpansion;
-      const dynamicCenter = {
-        x: activeCluster.base.x + (activeCluster.center.x - activeCluster.base.x) * centerProgress,
-        y: activeCluster.base.y + (activeCluster.center.y - activeCluster.base.y) * centerProgress
-      };
-      const particles = [...activeCluster.particles.values()];
-      const accelerations = particles.map(() => ({ x: 0, y: 0 }));
-      const angularSpeed = 0.13;
-
-      particles.forEach((particle, index) => {
-        const dx = particle.x - dynamicCenter.x;
-        const dy = particle.y - dynamicCenter.y;
-        const radius = Math.max(0.001, Math.hypot(dx, dy));
-        const radialX = dx / radius;
-        const radialY = dy / radius;
-        const radialVelocity = particle.vx * radialX + particle.vy * radialY;
-        const tangentVelocity = particle.vx * -radialY + particle.vy * radialX;
-        const radialAcceleration = (desiredRadius - radius) * 9 - radialVelocity * 4;
-        const tangentAcceleration = (angularSpeed * desiredRadius - tangentVelocity) * 1.8;
-        accelerations[index].x += radialX * radialAcceleration - radialY * tangentAcceleration;
-        accelerations[index].y += radialY * radialAcceleration + radialX * tangentAcceleration;
+    function stepMotion(now) {
+      const dt = lastMotionTime ? Math.min(0.04, (now - lastMotionTime) / 1000) : 0;
+      lastMotionTime = now;
+      orbitBodies.forEach((body, id) => {
+        if (detailOpen && id === selectedId) return;
+        body.angle = (body.angle + body.angularSpeed * dt) % (Math.PI * 2);
       });
-
-      for (let a = 0; a < particles.length; a += 1) {
-        for (let b = a + 1; b < particles.length; b += 1) {
-          const dx = particles[b].x - particles[a].x;
-          const dy = particles[b].y - particles[a].y;
-          const distanceSquared = dx * dx + dy * dy + 144;
-          const distance = Math.sqrt(distanceSquared);
-          const gravity = 900 / distanceSquared;
-          accelerations[a].x += dx / distance * gravity * particles[b].mass;
-          accelerations[a].y += dy / distance * gravity * particles[b].mass;
-          accelerations[b].x -= dx / distance * gravity * particles[a].mass;
-          accelerations[b].y -= dy / distance * gravity * particles[a].mass;
-        }
-      }
-
-      particles.forEach((particle, index) => {
-        particle.vx += accelerations[index].x * dt;
-        particle.vy += accelerations[index].y * dt;
-        particle.x += particle.vx * dt;
-        particle.y += particle.vy * dt;
-      });
-
-      for (let iteration = 0; iteration < 8; iteration += 1) {
-        for (let a = 0; a < particles.length; a += 1) {
-          for (let b = a + 1; b < particles.length; b += 1) {
-            const dx = particles[b].x - particles[a].x;
-            const dy = particles[b].y - particles[a].y;
-            const distance = Math.max(0.001, Math.hypot(dx, dy));
-            const minimum = (particles[a].radius + particles[b].radius + 6) * easedExpansion;
-            if (distance >= minimum) continue;
-            const correction = (minimum - distance) / 2;
-            const nx = dx / distance;
-            const ny = dy / distance;
-            particles[a].x -= nx * correction;
-            particles[a].y -= ny * correction;
-            particles[b].x += nx * correction;
-            particles[b].y += ny * correction;
-          }
-        }
-      }
-
-      activeCluster.ids.forEach(id => {
-        const particle = activeCluster.particles.get(id);
-        const position = { x: particle.x, y: particle.y };
-        currentPositions.set(id, position);
-        starGroups.get(id)?.setAttribute('transform', `translate(${position.x} ${position.y})`);
-      });
-      if (expansion >= 1) activeCluster.phase = 'orbiting';
+      paintPositions();
+      motionFrame = window.requestAnimationFrame(stepMotion);
     }
 
-    function stopClusterMotion(resetToBase) {
-      if (clusterFrame) window.cancelAnimationFrame(clusterFrame);
-      clusterFrame = null;
-      activeClusters.forEach(activeCluster => {
-        activeCluster.ids.forEach(id => {
-          starGroups.get(id)?.classList.remove('is-cluster-member');
-          if (!resetToBase) return;
-          currentPositions.set(id, { ...activeCluster.base });
-          starGroups.get(id)?.setAttribute('transform', `translate(${activeCluster.base.x} ${activeCluster.base.y})`);
-        });
-      });
-      activeClusters = new Map();
-      if (clusterIndicators) clusterIndicators.replaceChildren();
-    }
-
-    function positionsFor(config) {
-      return axialPositions(config);
-    }
-
-    function setAxisLabels(config) {
-      starLegend.hidden = false;
-      syncAxisSelects(config);
+    function stopMotion() {
+      if (motionFrame) window.cancelAnimationFrame(motionFrame);
+      motionFrame = null;
+      lastMotionTime = 0;
     }
 
     function buildScene() {
-      stopClusterMotion(false);
+      stopMotion();
       width = Math.max(320, Math.round(stage.getBoundingClientRect().width || 1000));
       height = Math.max(320, Math.round(stage.getBoundingClientRect().height || window.innerHeight || 700));
+      center = { x: width / 2, y: height / 2 };
       svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
       svg.setAttribute('height', height);
-      svg.setAttribute('aria-label', 'All neolabs shown as a drifting architecture constellation');
+      svg.setAttribute('aria-label', 'All neolabs orbiting one center; older labs are nearer the center and newer labs are nearer the edge');
       svg.replaceChildren();
       starGroups.clear();
-      starRadii.clear();
-      axisSelects.x = null;
-      axisSelects.y = null;
-      xAxisOverlay.replaceChildren();
+      nebulaTrails.clear();
 
       const defs = svgEl('defs');
       const gas = svgEl('filter', { id: 'star-gas', x: '-100%', y: '-100%', width: '300%', height: '300%' });
@@ -815,28 +535,38 @@
       const merge = svgEl('feMerge');
       merge.append(svgEl('feMergeNode', { in: 'blur' }), svgEl('feMergeNode', { in: 'SourceGraphic' }));
       glow.appendChild(merge);
-      defs.append(gas, glow);
+      const nebulaSoft = svgEl('filter', { id: 'nebula-soft', x: '-40%', y: '-40%', width: '180%', height: '180%' });
+      nebulaSoft.appendChild(svgEl('feGaussianBlur', { stdDeviation: 7.5 }));
+      const galacticCore = svgEl('radialGradient', { id: 'galactic-core-gradient' });
+      galacticCore.append(
+        svgEl('stop', { offset: '0%', 'stop-color': 'rgb(229 239 255)', 'stop-opacity': '.24' }),
+        svgEl('stop', { offset: '38%', 'stop-color': 'rgb(144 188 255)', 'stop-opacity': '.11' }),
+        svgEl('stop', { offset: '100%', 'stop-color': 'rgb(76 98 171)', 'stop-opacity': '0' })
+      );
+      const orbitDepth = svgEl('linearGradient', {
+        id: 'orbit-depth-gradient',
+        gradientUnits: 'userSpaceOnUse',
+        x1: center.x,
+        y1: 0,
+        x2: center.x,
+        y2: height
+      });
+      orbitDepth.append(
+        svgEl('stop', { offset: '15%', 'stop-color': 'rgb(179 211 255)', 'stop-opacity': '.05' }),
+        svgEl('stop', { offset: '50%', 'stop-color': 'rgb(179 211 255)', 'stop-opacity': '.13' }),
+        svgEl('stop', { offset: '85%', 'stop-color': 'rgb(196 222 255)', 'stop-opacity': '.28' })
+      );
+      defs.append(gas, glow, nebulaSoft, galacticCore, orbitDepth);
       svg.appendChild(defs);
 
-      const initialPositions = positionsFor(axisConfig);
-      const safeLeft = Math.max(width * .1, 42);
-      const safeRight = width - safeLeft;
-      const safeTop = Math.max(height * .12, 80);
-      const safeBottom = height - safeTop;
-      backgroundFar = svgEl('g', { class: 'background-stars background-stars-far', 'aria-hidden': 'true' });
-      backgroundNear = svgEl('g', { class: 'background-stars background-stars-near', 'aria-hidden': 'true' });
+      const backgroundFar = svgEl('g', { class: 'background-stars background-stars-far', 'aria-hidden': 'true' });
+      const backgroundNear = svgEl('g', { class: 'background-stars background-stars-near', 'aria-hidden': 'true' });
       const backgroundStarCount = Math.max(84, Math.min(180, Math.round(width * height / 12000)));
       for (let index = 0; index < backgroundStarCount; index += 1) {
-        let x; let y; let attempts = 0;
-        do {
-          x = safeLeft + Math.random() * (safeRight - safeLeft);
-          y = safeTop + Math.random() * (safeBottom - safeTop);
-          attempts += 1;
-        } while (attempts < 6 && [...initialPositions.values()].some(position => Math.hypot(position.x - x, position.y - y) < 42));
         const opacity = 0.07 + Math.random() * 0.2;
         const star = svgEl('circle', {
-          cx: x,
-          cy: y,
+          cx: Math.random() * width,
+          cy: Math.random() * height,
           r: 0.3 + Math.random() * (index % 4 === 0 ? 1.05 : 0.65),
           opacity,
           class: `background-star${reducedMotion ? '' : ' is-twinkling'}`,
@@ -846,62 +576,81 @@
       }
       svg.append(backgroundFar, backgroundNear);
 
-      clusterIndicators = svgEl('g', { class: 'cluster-orbits', 'aria-hidden': 'true' });
-      svg.appendChild(clusterIndicators);
+      configureOrbits();
+      const outerOrbitRadius = Math.max(...[...orbitBodies.values()].map(body => body.radius));
+      const galacticLayer = svgEl('g', { class: 'galactic-nebula', 'aria-hidden': 'true' });
+      galacticLayer.appendChild(svgEl('ellipse', {
+        cx: center.x,
+        cy: center.y,
+        rx: outerOrbitRadius * 0.48,
+        ry: Math.max(18, outerOrbitRadius * 0.14 * orbitTilt),
+        transform: `rotate(-12 ${center.x} ${center.y})`,
+        class: 'galactic-core-haze'
+      }));
+      svg.appendChild(galacticLayer);
 
-      const xAxis = document.createElement('label');
-      xAxis.className = 'space-x-axis-control';
-      const xSelect = document.createElement('select');
-      xSelect.className = 'axis-select';
-      xSelect.setAttribute('aria-label', 'X axis metric; scale 0 none to 3 high');
-      xAxis.appendChild(xSelect);
-      xAxisOverlay.appendChild(xAxis);
-      axisTooltip.bind(xAxisOverlay, () => architectureMetrics[axisConfig.x].description);
-      bindAxisSelect('x', xSelect);
+      const orbitLayer = svgEl('g', { class: 'system-orbits', 'aria-hidden': 'true' });
+      orbitBodies.forEach(body => {
+        orbitLayer.appendChild(svgEl('ellipse', { cx: center.x, cy: center.y, rx: body.radius, ry: body.radius * orbitTilt, class: 'system-orbit-ring' }));
+      });
+      orbitLayer.appendChild(svgEl('circle', { cx: center.x, cy: center.y, r: 3, class: 'system-barycenter' }));
+      svg.appendChild(orbitLayer);
 
-      const yAxis = svgEl('g', { class: 'axis-guide axis-guide-y', transform: `translate(${width / 2 - 110} ${height * .9 - 83})` });
-      axisTooltip.bind(yAxis, () => architectureMetrics[axisConfig.y].description);
-      yAxis.appendChild(axisSelectControl('y', { x: 0, y: 0, width: 220, height: 42 }));
-      svg.appendChild(yAxis);
+      const trailLayer = svgEl('g', { class: 'nebula-trails', 'aria-hidden': 'true' });
+      labs.forEach(lab => {
+        const body = orbitBodies.get(lab.id);
+        const color = stellarColor(body.formationTime);
+        const gradientId = `trail-gradient-${lab.id}`;
+        const gradient = svgEl('linearGradient', { id: gradientId, gradientUnits: 'userSpaceOnUse' });
+        gradient.append(
+          svgEl('stop', { offset: '0%', 'stop-color': color, 'stop-opacity': '0' }),
+          svgEl('stop', { offset: '42%', 'stop-color': color, 'stop-opacity': '.12' }),
+          svgEl('stop', { offset: '82%', 'stop-color': color, 'stop-opacity': '.42' }),
+          svgEl('stop', { offset: '100%', 'stop-color': color, 'stop-opacity': '.68' })
+        );
+        defs.appendChild(gradient);
+        const fog = svgEl('path', { class: 'star-nebula-trail star-nebula-fog', stroke: `url(#${gradientId})` });
+        const filament = svgEl('path', { class: 'star-nebula-trail star-nebula-filament', stroke: `url(#${gradientId})` });
+        const span = 0.5 + body.radius / outerOrbitRadius * 0.42;
+        const phaseOffset = (hash(`${lab.id}-wake`) % 628) / 100;
+        nebulaTrails.set(lab.id, { fog, filament, gradient, span, phaseOffset });
+        trailLayer.append(fog, filament);
+      });
+      svg.appendChild(trailLayer);
 
-      labs.forEach((lab, index) => {
+      labs.forEach(lab => {
         const funding = financing.get(lab.id);
         const radius = 4.5 + 9.5 * Math.sqrt(funding.totalRaised / maxRaised);
         const haloRadius = radius + 5 + 20 * Math.sqrt(funding.latestValuation / maxValuation);
+        const body = orbitBodies.get(lab.id);
         const confidence = disclosureScore(lab);
-        starRadii.set(lab.id, haloRadius + 3);
         const outer = svgEl('g', {
           class: `star-point confidence-${confidence}${lab.id === selectedId ? ' is-selected' : ''}`,
           'data-lab': lab.id,
-          style: `--star-color:${stellarColor(parseFormationTime(lab))};--drift-x:${((hash(lab.id) % 13) - 6)}px;--drift-y:${((hash(`${lab.id}-y`) % 13) - 6)}px;--drift-duration:${7 + index % 5}s;--drift-delay:${-(index % 7)}s`
+          style: `--star-color:${stellarColor(body.formationTime)}`
         });
-        const drift = svgEl('g', { class: 'star-drift' });
-        drift.appendChild(svgEl('circle', { r: haloRadius, class: 'star-halo' }));
-        drift.appendChild(svgEl('circle', { r: radius, class: 'star-core' }));
-        drift.appendChild(svgEl('circle', { r: radius + 5, class: 'star-selection-ring' }));
-        const initialPoint = initialPositions.get(lab.id);
-        const edgeThreshold = width < 700 ? .38 : .18;
-        const labelAtLeftEdge = initialPoint.x > width * (1 - edgeThreshold);
-        const labelAtRightEdge = initialPoint.x < width * edgeThreshold;
+        const starShape = svgEl('g');
+        starShape.appendChild(svgEl('circle', { r: haloRadius, class: 'star-halo' }));
+        starShape.appendChild(svgEl('circle', { r: radius, class: 'star-core' }));
+        starShape.appendChild(svgEl('circle', { r: radius + 5, class: 'star-selection-ring' }));
+        const labelOnLeft = Math.cos(body.angle) < 0;
         const label = svgEl('text', {
-          x: labelAtLeftEdge ? -(radius + 12) : labelAtRightEdge ? radius + 12 : 0,
-          y: -(radius + 12),
-          'text-anchor': labelAtLeftEdge ? 'end' : labelAtRightEdge ? 'start' : 'middle',
+          x: labelOnLeft ? -(radius + 12) : radius + 12,
+          y: -(radius + 8),
+          'text-anchor': labelOnLeft ? 'end' : 'start',
           class: 'star-label'
         });
         label.textContent = lab.name;
-        drift.appendChild(label);
-        outer.appendChild(drift);
-        const starTitle = svgEl('title');
-        starTitle.textContent = `${lab.name}; formation time ${lab.formation?.time || 'unknown'}; raised ${formatUsd(funding.totalRaised)}; latest valuation ${formatUsd(funding.latestValuation)}; ${disclosureLabel(lab).toLowerCase()} disclosure confidence`;
-        outer.appendChild(starTitle);
+        starShape.appendChild(label);
+        outer.appendChild(starShape);
+        const title = svgEl('title');
+        title.textContent = `${lab.name}; formed ${lab.formation?.time || 'unknown'}; raised ${formatUsd(funding.totalRaised)}; latest valuation ${formatUsd(funding.latestValuation)}; ${disclosureLabel(lab).toLowerCase()} disclosure confidence`;
+        outer.appendChild(title);
         outer.addEventListener('click', event => {
           event.stopPropagation();
           pinLab(lab.id);
         });
-        outer.addEventListener('pointerenter', () => {
-          previewLab(lab.id);
-        });
+        outer.addEventListener('pointerenter', () => previewLab(lab.id));
         outer.addEventListener('pointerleave', () => {
           if (hoverStarId !== lab.id) return;
           hoverStarId = null;
@@ -911,54 +660,10 @@
         svg.appendChild(outer);
       });
 
-      currentPositions = initialPositions;
-      currentPositions.forEach((position, id) => starGroups.get(id).setAttribute('transform', `translate(${position.x} ${position.y})`));
-      stage.dataset.view = 'axes';
-      setAxisLabels(axisConfig);
-      startClusterMotion();
+      paintPositions();
+      stage.dataset.view = 'orbits';
+      if (!reducedMotion) motionFrame = window.requestAnimationFrame(stepMotion);
       if (detailOpen) window.requestAnimationFrame(positionDetail);
-    }
-
-    function transitionAxes(nextConfig) {
-      stopClusterMotion(false);
-      if (animationFrame) window.cancelAnimationFrame(animationFrame);
-      const start = new Map([...currentPositions].map(([id, position]) => [id, { ...position }]));
-      const target = positionsFor(nextConfig);
-      const started = performance.now();
-      const duration = reducedMotion ? 0 : 980;
-      axisConfig = nextConfig;
-      writeArchitectureAxes(nextConfig);
-      updateViewLinks(ids, selectedId);
-      stage.dataset.view = 'axes';
-      stage.classList.add('is-transitioning');
-      setAxisLabels(nextConfig);
-      const ease = value => 1 - Math.pow(1 - value, 4);
-      const step = now => {
-        const progress = duration ? Math.min(1, (now - started) / duration) : 1;
-        const eased = ease(progress);
-        const arc = Math.sin(progress * Math.PI);
-        labs.forEach(lab => {
-          const from = start.get(lab.id);
-          const to = target.get(lab.id);
-          const direction = hash(lab.id) % 2 ? 1 : -1;
-          const position = {
-            x: from.x + (to.x - from.x) * eased + direction * arc * Math.min(34, width * 0.025),
-            y: from.y + (to.y - from.y) * eased - arc * 18
-          };
-          currentPositions.set(lab.id, position);
-          starGroups.get(lab.id).setAttribute('transform', `translate(${position.x} ${position.y})`);
-        });
-        if (detailOpen) positionDetail();
-        if (progress < 1) animationFrame = window.requestAnimationFrame(step);
-        else {
-          currentPositions = target;
-          stage.classList.remove('is-transitioning');
-          animationFrame = null;
-          startClusterMotion();
-          if (detailOpen) positionDetail();
-        }
-      };
-      animationFrame = window.requestAnimationFrame(step);
     }
 
     function clearHoverClose() {
@@ -976,9 +681,7 @@
         if (pinnedId) {
           detailMode = 'pinned';
           selectLab(pinnedId);
-        } else {
-          closeDetail();
-        }
+        } else closeDetail();
       }, 90);
     }
 
@@ -997,20 +700,79 @@
       selectLab(id);
     }
 
-    function selectLab(id) {
-      selectedId = id;
-      setActiveLab(id);
-      starGroups.forEach((group, labId) => group.classList.toggle('is-selected', labId === id));
-      const lab = labById.get(id);
-      query('#architecture-confidence').textContent = `${disclosureLabel(lab)} disclosure confidence`;
-      const nameLink = query('#architecture-name');
-      nameLink.textContent = `${lab.name} ↗`;
-      nameLink.href = lab.website;
-      nameLink.setAttribute('aria-label', `Visit ${lab.name} website`);
-      query('#architecture-note').textContent = lab.note;
-      const citations = query('#architecture-citations');
-      renderCitations(citations, insightIdsForLab(lab));
-      citations.classList.add('space-citations');
+    function renderMiniRadar(svg, lab) {
+      const axes = Object.keys(architectureMetrics);
+      const cx = 80;
+      const cy = 46;
+      const radius = 31;
+      const point = (index, value, scale = 1) => {
+        const angle = -Math.PI / 2 + index * Math.PI * 2 / axes.length;
+        const distance = radius * scale * (value / 3);
+        return `${cx + Math.cos(angle) * distance},${cy + Math.sin(angle) * distance}`;
+      };
+      const polygon = scale => axes.map((_, index) => point(index, 3, scale)).join(' ');
+      svg.replaceChildren();
+      [1 / 3, 2 / 3, 1].forEach(scale => {
+        svg.appendChild(svgEl('polygon', { points: polygon(scale), class: 'mini-radar-grid' }));
+      });
+      svg.appendChild(svgEl('polygon', {
+        points: axes.map((key, index) => point(index, analysisScore(lab, key))).join(' '),
+        class: 'mini-radar-profile',
+        style: `--mini-lab-color:${stellarColor(formationTimelineValue(lab))}`
+      }));
+      axes.forEach((key, index) => {
+        const angle = -Math.PI / 2 + index * Math.PI * 2 / axes.length;
+        svg.appendChild(svgEl('circle', {
+          cx: cx + Math.cos(angle) * radius * (analysisScore(lab, key) / 3),
+          cy: cy + Math.sin(angle) * radius * (analysisScore(lab, key) / 3),
+          r: 1.7,
+          class: 'mini-radar-point'
+        }));
+      });
+    }
+
+    function renderMiniTechWeb(svg, lab) {
+      const graph = window.TECH_WEB_DATA;
+      svg.replaceChildren();
+      if (!graph?.labEdges?.[lab.id]) return;
+      const layerIndex = new Map(graph.layers.map((layer, index) => [layer.id, index]));
+      const nodeById = new Map(graph.nodes.map(node => [node.id, node]));
+      const edges = graph.labEdges[lab.id];
+      const usedNodes = [...new Set(edges.flat())].map(id => nodeById.get(id)).filter(Boolean);
+      const positions = new Map();
+      usedNodes.forEach(node => {
+        const x = 12 + (layerIndex.get(node.layer) || 0) * 34;
+        const sameLayer = usedNodes.filter(peer => peer.layer === node.layer);
+        const y = 20 + sameLayer.indexOf(node) * Math.max(8, Math.min(14, 58 / Math.max(1, sameLayer.length - 1 || 1)));
+        positions.set(node.id, { x, y: Math.min(76, y) });
+      });
+      for (let index = 0; index < graph.layers.length; index += 1) {
+        const x = 12 + index * 34;
+        svg.appendChild(svgEl('line', { x1: x, y1: 12, x2: x, y2: 78, class: 'mini-web-column' }));
+      }
+      edges.forEach(([from, to]) => {
+        const start = positions.get(from);
+        const end = positions.get(to);
+        if (!start || !end) return;
+        svg.appendChild(svgEl('line', { x1: start.x, y1: start.y, x2: end.x, y2: end.y, class: 'mini-web-edge' }));
+      });
+      usedNodes.forEach(node => {
+        const position = positions.get(node.id);
+        svg.appendChild(svgEl('circle', { cx: position.x, cy: position.y, r: node.unknown ? 2.1 : 2.8, class: `mini-web-node${node.unknown ? ' is-unknown' : ''}` }));
+      });
+    }
+
+    function renderDetailMiniViews(lab) {
+      const radarLink = query('#architecture-radar-link');
+      radarLink.href = selectionHref('radar-profiles.html', ids, lab.id);
+      renderMiniRadar(query('.mini-radar-svg'), lab);
+
+      const techWebLink = query('#architecture-tech-web-link');
+      techWebLink.href = selectionHref('tech-web.html', ids, lab.id);
+      renderMiniTechWeb(query('.mini-tech-web-svg'), lab);
+    }
+
+    function renderDetailProfile(lab) {
       const profile = query('#architecture-profile');
       profile.replaceChildren();
       const funding = financing.get(lab.id);
@@ -1028,6 +790,17 @@
         metric.append(label, value);
         profile.appendChild(metric);
       });
+    }
+
+    function renderDetailPeople(lab) {
+      const people = query('#architecture-people');
+      people.replaceChildren();
+      const heading = document.createElement('h3');
+      heading.textContent = 'Key people & experience';
+      people.append(heading, renderPeopleList(lab));
+    }
+
+    function renderDetailFunding(lab) {
       const fundingTimeline = query('#architecture-funding');
       fundingTimeline.replaceChildren();
       const fundingTable = document.createElement('table');
@@ -1049,21 +822,26 @@
       });
       fundingTable.appendChild(fundingBody);
       fundingTimeline.appendChild(fundingTable);
-      Object.keys(architectureMetrics).forEach(key => {
-        const metric = document.createElement('div');
-        metric.className = 'star-metric';
-        const label = document.createElement('span');
-        label.textContent = architectureMetrics[key].label;
-        const value = document.createElement('strong');
-        value.textContent = `${analysisScore(lab, key)}/3`;
-        value.title = analysisScoreLabel(lab, key);
-        metric.setAttribute('aria-label', `${architectureMetrics[key].label}: ${analysisScoreLabel(lab, key)}`);
-        metric.append(label, value);
-        profile.appendChild(metric);
-      });
+    }
+
+    function selectLab(id) {
+      selectedId = id;
+      setActiveLab(id);
+      starGroups.forEach((group, labId) => group.classList.toggle('is-selected', labId === id));
+      const lab = labById.get(id);
+      query('#architecture-confidence').textContent = `${disclosureLabel(lab)} disclosure confidence`;
+      const nameLink = query('#architecture-name');
+      nameLink.textContent = `${lab.name} ↗`;
+      nameLink.href = lab.website;
+      nameLink.setAttribute('aria-label', `Visit ${lab.name} website`);
+      query('#architecture-note').textContent = lab.note;
+      renderDetailMiniViews(lab);
+      renderDetailProfile(lab);
+      renderDetailPeople(lab);
+      renderDetailFunding(lab);
+
       detail.hidden = false;
       detailOpen = true;
-      updateClusterFreezeState();
       window.requestAnimationFrame(() => {
         positionDetail();
         trackDetail();
@@ -1111,13 +889,11 @@
       hoverStarId = null;
       detailHovered = false;
       detail.hidden = true;
-      updateClusterFreezeState();
       if (detailFrame) window.cancelAnimationFrame(detailFrame);
       detailFrame = null;
     }
 
-    const onResize = debounce(() => buildScene(), 120);
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', debounce(buildScene, 120));
     buildScene();
   }
 
@@ -1233,30 +1009,7 @@
 
       const peopleCell = document.createElement('td');
       peopleCell.dataset.label = 'Key people';
-      const peopleList = document.createElement('ul');
-      peopleList.className = 'radar-people';
-      lab.keyPeople.forEach(person => {
-        const item = document.createElement('li');
-        const heading = document.createElement('div');
-        heading.className = 'radar-person-heading';
-        const personName = document.createElement('strong');
-        personName.className = 'radar-person-full';
-        personName.textContent = person.name;
-        const lastName = document.createElement('span');
-        lastName.className = 'radar-person-last';
-        const nameParts = person.name.trim().split(/\s+/);
-        lastName.textContent = nameParts[nameParts.length - 1];
-        lastName.setAttribute('aria-label', person.name);
-        const role = document.createElement('span');
-        role.className = 'radar-person-role';
-        role.textContent = person.role;
-        heading.append(personName, lastName, role);
-        const experience = document.createElement('small');
-        experience.textContent = person.pastExperiences.join(' · ');
-        item.append(heading, experience);
-        peopleList.appendChild(item);
-      });
-      peopleCell.appendChild(peopleList);
+      peopleCell.appendChild(renderPeopleList(lab));
       row.appendChild(peopleCell);
 
       row.addEventListener('click', event => {
@@ -1914,8 +1667,7 @@
   stripDeprecatedSelectionParam();
   renderLastUpdated();
 
-  if (page === 'index') initIndex();
-  else if (page === 'space') initArchitecture();
+  if (page === 'space') initArchitecture();
   else if (page === 'radar') initRadar();
   else if (page === 'tech-web') initTechWeb();
 })();

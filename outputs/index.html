@@ -16,22 +16,31 @@
     </nav>
   </header>
   <main class="view-main architecture-main">
-    <section id="architecture-stage" class="architecture-stage" data-view="axes" aria-label="Neolab architecture constellation">
+    <section id="architecture-stage" class="architecture-stage" data-view="orbits" aria-label="Neolabs in concentric formation-time orbits">
       <svg class="architecture-svg" role="img"></svg>
-      <div id="space-x-axis-overlay" class="space-x-axis-overlay"></div>
       <aside id="architecture-detail" class="star-detail" aria-live="polite" hidden>
         <button id="architecture-detail-close" class="star-detail-close" type="button" aria-label="Close lab details">×</button>
         <div id="architecture-confidence" class="star-detail-kicker"></div>
         <h2><a id="architecture-name" class="star-detail-title-link" target="_blank" rel="noopener noreferrer"></a></h2>
         <p id="architecture-note"></p>
+        <div id="architecture-related-views" class="star-related-views" aria-label="Related views">
+          <a id="architecture-radar-link" class="mini-view-card" href="radar-profiles.html">
+            <span class="mini-view-label">Radar profile</span>
+            <svg class="mini-view-svg mini-radar-svg" viewBox="0 0 160 90" role="img" aria-label="Radar profile snapshot"></svg>
+          </a>
+          <a id="architecture-tech-web-link" class="mini-view-card" href="tech-web.html">
+            <span class="mini-view-label">Tech web</span>
+            <svg class="mini-view-svg mini-tech-web-svg" viewBox="0 0 160 90" role="img" aria-label="Tech web snapshot"></svg>
+          </a>
+        </div>
         <div id="architecture-profile" class="star-metrics"></div>
+        <div id="architecture-people" class="star-people"></div>
         <div id="architecture-funding" class="funding-table-wrap"></div>
-        <div id="architecture-citations" class="space-citations"></div>
       </aside>
       <div class="star-legend" aria-label="Space map legend">
         <span><i class="star-key star-key-core"></i>Core · known amount raised</span>
         <span><i class="star-key star-key-halo"></i>Halo · latest valuation</span>
-        <span><i class="star-age-scale"></i>newer - older</span>
+        <span><i class="star-age-scale"></i>Older center · newer edge</span>
         <span><i class="star-key star-key-gas"></i>Diffusivity · disclosure confidence</span>
       </div>
       <p class="source-note last-updated space-last-updated" data-last-updated></p>
@@ -39,6 +48,7 @@
     </section>
   </main>
   <script src="neolabs-data.js"></script>
+  <script src="tech-web-data.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
