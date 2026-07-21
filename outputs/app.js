@@ -8,9 +8,19 @@
   }
 
   function compareLabsByFormation(a, b) {
-    const aYear = Number.isFinite(a.formation?.year) ? a.formation.year : -Infinity;
-    const bYear = Number.isFinite(b.formation?.year) ? b.formation.year : -Infinity;
-    return bYear - aYear || a.name.localeCompare(b.name);
+    const aTime = formationSortKey(a);
+    const bTime = formationSortKey(b);
+    return aTime.year - bTime.year || aTime.month - bTime.month || a.name.localeCompare(b.name);
+  }
+
+  function formationSortKey(lab) {
+    const match = String(lab.formation?.time || '').match(/^(\d{4})(?:\.(\d{2}))?$/);
+    return match ? { year: Number(match[1]), month: match[2] ? Number(match[2]) : 13 } : { year: -Infinity, month: -Infinity };
+  }
+
+  function parseFormationTime(lab) {
+    const value = Number.parseFloat(lab.formation?.time);
+    return Number.isFinite(value) ? value : -Infinity;
   }
 
   const allLabs = dataset.labs.slice().sort(compareLabsByFormation);
@@ -407,11 +417,11 @@
       return value >>> 0;
     }
 
-    function stellarColor(year) {
-      const years = labs.map(lab => lab.formation?.year).filter(Number.isFinite);
-      const newest = Math.max(...years);
-      const oldest = Math.min(...years);
-      const progress = newest === oldest ? 0 : Math.max(0, Math.min(1, (newest - year) / (newest - oldest)));
+    function stellarColor(time) {
+      const times = labs.map(parseFormationTime).filter(Number.isFinite);
+      const newest = Math.max(...times);
+      const oldest = Math.min(...times);
+      const progress = newest === oldest ? 0 : Math.max(0, Math.min(1, (newest - time) / (newest - oldest)));
       const stops = progress < 0.5
         ? { from: [151, 207, 255], to: [246, 235, 198], mix: progress * 2 }
         : { from: [246, 235, 198], to: [255, 157, 82], mix: (progress - 0.5) * 2 };
@@ -746,7 +756,7 @@
         const outer = svgEl('g', {
           class: `star-point confidence-${confidence}${lab.id === selectedId ? ' is-selected' : ''}`,
           'data-lab': lab.id,
-          style: `--star-color:${stellarColor(lab.formation?.year || 2026)};--drift-x:${((hash(lab.id) % 13) - 6)}px;--drift-y:${((hash(`${lab.id}-y`) % 13) - 6)}px;--drift-duration:${7 + index % 5}s;--drift-delay:${-(index % 7)}s`
+          style: `--star-color:${stellarColor(parseFormationTime(lab))};--drift-x:${((hash(lab.id) % 13) - 6)}px;--drift-y:${((hash(`${lab.id}-y`) % 13) - 6)}px;--drift-duration:${7 + index % 5}s;--drift-delay:${-(index % 7)}s`
         });
         const drift = svgEl('g', { class: 'star-drift' });
         drift.appendChild(svgEl('circle', { r: haloRadius, class: 'star-halo' }));
@@ -757,7 +767,7 @@
         drift.appendChild(label);
         outer.appendChild(drift);
         const starTitle = svgEl('title');
-        starTitle.textContent = `${lab.name}; formed ${lab.formation?.year || 'unknown'}; raised ${formatUsd(funding.totalRaised)}; latest valuation ${formatUsd(funding.latestValuation)}; ${disclosureLabel(lab).toLowerCase()} disclosure confidence`;
+        starTitle.textContent = `${lab.name}; formation time ${lab.formation?.time || 'unknown'}; raised ${formatUsd(funding.totalRaised)}; latest valuation ${formatUsd(funding.latestValuation)}; ${disclosureLabel(lab).toLowerCase()} disclosure confidence`;
         outer.appendChild(starTitle);
         outer.addEventListener('click', event => {
           event.stopPropagation();
@@ -877,7 +887,7 @@
       profile.replaceChildren();
       const funding = financing.get(lab.id);
       [
-        ['Formed', String(lab.formation?.year || 'Unknown')],
+        ['Formation time', String(lab.formation?.time || 'Unknown')],
         ['Known raised', formatUsd(funding.totalRaised)],
         ['Latest valuation', formatUsd(funding.latestValuation)]
       ].forEach(([metricLabel, metricValue]) => {

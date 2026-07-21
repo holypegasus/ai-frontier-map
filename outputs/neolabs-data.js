@@ -47,7 +47,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "Thinking Machines",
       "code": "TM",
       "formation": {
-        "year": 2025,
+        "time": "2025.02",
         "insightId": "thinking.formation"
       },
       "fundingHistory": [
@@ -86,11 +86,11 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "Fine-tuning can be more efficient than pretraining for many uses; a broad efficiency lead is not demonstrated."
         },
         "adaptivity": {
-          "score": 3,
+          "score": 2,
           "rationale": "Per-user customization and weight adaptation are central to the product thesis."
         },
         "controllability": {
-          "score": 3,
+          "score": 2,
           "rationale": "Determinism, reproducibility, and steerability are explicit research and product focuses."
         }
       },
@@ -130,10 +130,10 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "ssi",
       "name": "SSI (Safe Superintelligence)",
-      "shortName": "SSI",
+      "shortName": "Safe SI",
       "code": "SSI",
       "formation": {
-        "year": 2024,
+        "time": "2024.06",
         "insightId": "ssi.formation"
       },
       "fundingHistory": [
@@ -221,7 +221,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "Ineffable",
       "code": "INE",
       "formation": {
-        "year": 2025,
+        "time": "2025",
         "insightId": "ineffable.formation"
       },
       "fundingHistory": [
@@ -288,10 +288,10 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "recursive",
       "name": "Recursive Superintelligence",
-      "shortName": "RSI",
+      "shortName": "Recursive SI",
       "code": "RSI",
       "formation": {
-        "year": 2025,
+        "time": "2025.12",
         "insightId": "recursive.formation"
       },
       "fundingHistory": [
@@ -385,7 +385,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "Sakana",
       "code": "SAK",
       "formation": {
-        "year": 2023,
+        "time": "2023.07",
         "insightId": "sakana.formation"
       },
       "fundingHistory": [
@@ -434,7 +434,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "Efficiency is the core thesis, including smaller and recombined systems."
         },
         "adaptivity": {
-          "score": 3,
+          "score": 2,
           "rationale": "Evolution is inherently adaptive, though adaptation is generally per-deployment."
         },
         "controllability": {
@@ -478,10 +478,10 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "id": "liquid",
       "name": "Liquid AI",
-      "shortName": "Liquid",
+      "shortName": "Liquid AI",
       "code": "LIQ",
       "formation": {
-        "year": 2023,
+        "time": "2023.12",
         "insightId": "liquid.formation"
       },
       "fundingHistory": [
@@ -514,15 +514,15 @@ window.NEOLABS_DATA = Object.freeze({
       },
       "scores": {
         "readiness": {
-          "score": 3,
+          "score": 2,
           "rationale": "LFMs and an edge-deployment platform are shipping."
         },
         "capability": {
-          "score": 2,
+          "score": 1,
           "rationale": "Best-in-class small models are demonstrated, but this is not primarily an AGI-scale bet."
         },
         "dataEfficiency": {
-          "score": 3,
+          "score": 2,
           "rationale": "Smaller models need less data and compute, but they remain pretrained systems."
         },
         "computeEfficiency": {
@@ -534,7 +534,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "Continuous-time dynamics adapt at inference by construction."
         },
         "controllability": {
-          "score": 3,
+          "score": 2,
           "rationale": "Dynamical-systems formalism is more analyzable, with the claim partially validated."
         }
       },
@@ -585,7 +585,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "Ndea",
       "code": "NDE",
       "formation": {
-        "year": 2024,
+        "time": "2024",
         "insightId": "ndea.formation"
       },
       "fundingHistory": [
@@ -612,7 +612,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "Research lab with no product disclosed."
         },
         "capability": {
-          "score": 3,
+          "score": 2,
           "rationale": "AGI is framed as efficient skill acquisition, with science automation as a major ambition."
         },
         "dataEfficiency": {
@@ -620,7 +620,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "Few-shot abstraction and the ARC lineage are the philosophical thesis."
         },
         "computeEfficiency": {
-          "score": 3,
+          "score": 2,
           "rationale": "Search is expensive, but synthesized programs are cheap to run once found."
         },
         "adaptivity": {
@@ -663,7 +663,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "AMI",
       "code": "AMI",
       "formation": {
-        "year": 2025,
+        "time": "2025.12",
         "insightId": "ami.formation"
       },
       "fundingHistory": [
@@ -694,11 +694,11 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "The thesis targets human-level intelligence through persistent memory, reasoning, and planning."
         },
         "dataEfficiency": {
-          "score": 3,
+          "score": 2,
           "rationale": "JEPA-style representations avoid pixel-level prediction and emphasize abstract learning from observation."
         },
         "computeEfficiency": {
-          "score": 3,
+          "score": 2,
           "rationale": "Modular, objective-driven world models are pitched as more efficient than generative alternatives."
         },
         "adaptivity": {
@@ -706,7 +706,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "Persistent memory and domain-specific world models are designed to update from experience."
         },
         "controllability": {
-          "score": 3,
+          "score": 2,
           "rationale": "Modular objectives and learned dynamics are pitched as controllable by construction, though unproven."
         }
       },
@@ -741,7 +741,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "World Labs",
       "code": "WL",
       "formation": {
-        "year": 2024,
+        "time": "2024.04",
         "insightId": "worldlabs.formation"
       },
       "fundingHistory": [
@@ -778,7 +778,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "Marble has launched as a product."
         },
         "capability": {
-          "score": 3,
+          "score": 2,
           "rationale": "Spatial intelligence is framed as an AGI pillar, not the whole capability stack."
         },
         "dataEfficiency": {
@@ -786,7 +786,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "3D and video workloads are data-hungry."
         },
         "computeEfficiency": {
-          "score": 2,
+          "score": 1,
           "rationale": "Generative 3D workloads remain heavy, despite ongoing efficiency work."
         },
         "adaptivity": {
@@ -845,7 +845,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "Inception",
       "code": "INC",
       "formation": {
-        "year": 2024,
+        "time": "2024",
         "insightId": "inception.formation"
       },
       "fundingHistory": [
@@ -931,7 +931,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "OpenAI",
       "code": "OAI",
       "formation": {
-        "year": 2015,
+        "time": "2015.12",
         "insightId": "openai.formation"
       },
       "fundingHistory": [
@@ -1000,7 +1000,7 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "The approach is primarily brute-force scaling, even as inference costs fall."
         },
         "adaptivity": {
-          "score": 2,
+          "score": 1,
           "rationale": "In-context learning and fine-tuning help, but there is no true continual learning."
         },
         "controllability": {
@@ -1039,7 +1039,7 @@ window.NEOLABS_DATA = Object.freeze({
       "shortName": "Anthropic",
       "code": "ANT",
       "formation": {
-        "year": 2021,
+        "time": "2021.05",
         "insightId": "anthropic.formation"
       },
       "fundingHistory": [
@@ -1124,15 +1124,15 @@ window.NEOLABS_DATA = Object.freeze({
           "rationale": "The lab remains in the large-scale pretraining regime."
         },
         "computeEfficiency": {
-          "score": 2,
+          "score": 1,
           "rationale": "Scaling and efficiency work are meaningful, but frontier capability remains resource-intensive."
         },
         "adaptivity": {
-          "score": 2,
+          "score": 1,
           "rationale": "The same core limits as OpenAI remain: context and tools adapt, but not true continual learning."
         },
         "controllability": {
-          "score": 3,
+          "score": 2,
           "rationale": "Constitutional AI and mechanistic interpretability make control a core research bet, though it remains imperfect."
         }
       },
@@ -1504,7 +1504,7 @@ window.NEOLABS_DATA = Object.freeze({
     "thinking.formation": {
       "labId": "thinking",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "thinking.funding.2025-seed": {
       "labId": "thinking",
@@ -1525,7 +1525,7 @@ window.NEOLABS_DATA = Object.freeze({
     "ssi.formation": {
       "labId": "ssi",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "ssi.funding.2024-seed": {
       "labId": "ssi",
@@ -1552,7 +1552,7 @@ window.NEOLABS_DATA = Object.freeze({
     "ineffable.formation": {
       "labId": "ineffable",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "ineffable.funding.2026-seed": {
       "labId": "ineffable",
@@ -1573,7 +1573,7 @@ window.NEOLABS_DATA = Object.freeze({
     "recursive.formation": {
       "labId": "recursive",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "recursive.funding.2026-round": {
       "labId": "recursive",
@@ -1594,7 +1594,7 @@ window.NEOLABS_DATA = Object.freeze({
     "sakana.formation": {
       "labId": "sakana",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "sakana.funding.2024-series-a": {
       "labId": "sakana",
@@ -1621,7 +1621,7 @@ window.NEOLABS_DATA = Object.freeze({
     "liquid.formation": {
       "labId": "liquid",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "liquid.funding.2023-seed": {
       "labId": "liquid",
@@ -1648,7 +1648,7 @@ window.NEOLABS_DATA = Object.freeze({
     "ndea.formation": {
       "labId": "ndea",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "ndea.funding.2025-launch": {
       "labId": "ndea",
@@ -1669,7 +1669,7 @@ window.NEOLABS_DATA = Object.freeze({
     "ami.formation": {
       "labId": "ami",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "ami.funding.2026-seed": {
       "labId": "ami",
@@ -1690,7 +1690,7 @@ window.NEOLABS_DATA = Object.freeze({
     "worldlabs.formation": {
       "labId": "worldlabs",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "worldlabs.funding.2024-early": {
       "labId": "worldlabs",
@@ -1717,7 +1717,7 @@ window.NEOLABS_DATA = Object.freeze({
     "inception.formation": {
       "labId": "inception",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "inception.funding.2025-seed": {
       "labId": "inception",
@@ -1738,7 +1738,7 @@ window.NEOLABS_DATA = Object.freeze({
     "openai.formation": {
       "labId": "openai",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "openai.funding.2023-secondary": {
       "labId": "openai",
@@ -1777,7 +1777,7 @@ window.NEOLABS_DATA = Object.freeze({
     "anthropic.formation": {
       "labId": "anthropic",
       "kind": "formation",
-      "field": "formation.year"
+      "field": "formation.time"
     },
     "anthropic.funding.2023-series-c": {
       "labId": "anthropic",
@@ -1830,7 +1830,7 @@ window.NEOLABS_DATA = Object.freeze({
     {
       "sourceId": "thinking-reuters-2025",
       "insightId": "thinking.formation",
-      "relationship": "supports"
+      "relationship": "rports"
     },
     {
       "sourceId": "thinking-reuters-2025",
