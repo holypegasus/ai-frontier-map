@@ -477,7 +477,7 @@ body[data-page="space"] .view-nav a.is-current { background: rgb(179 211 255 / 9
 .web-lab-chip.is-reset { border-style: dashed; color: var(--muted); }
 .web-lab-chip[aria-pressed="true"] { border-color: var(--lab-color, var(--primary)); background: color-mix(in srgb, var(--lab-color, var(--primary)) 18%, var(--surface)); color: var(--foreground); }
 .web-lab-chip[aria-pressed="true"] .web-lab-chip-dot { background: var(--foreground); }
-body.has-web-selection .web-lab-chip:not([aria-pressed="true"]) { opacity: .45; }
+body.has-web-selection .web-legend .web-lab-chip:not([aria-pressed="true"]) { opacity: .45; }
 .web-map-shell { overflow-x: auto; overflow-y: hidden; border: 1px solid var(--border); border-radius: 16px; background: color-mix(in srgb, var(--surface) 64%, transparent); -webkit-overflow-scrolling: touch; }
 .web-svg { display: block; min-width: 100%; color: var(--foreground); }
 .web-layer-number-svg, .web-layer-subheading-svg, .web-route-node-label { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
@@ -485,14 +485,17 @@ body.has-web-selection .web-lab-chip:not([aria-pressed="true"]) { opacity: .45; 
 .web-layer-heading-svg { fill: var(--foreground); font-size: 15px; font-weight: 500; text-transform: uppercase; }
 .web-layer-line-svg { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .web-route-edge { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; transition: opacity 180ms ease, stroke-width 180ms ease; }
-.web-route-edge.is-base { stroke-width: 1.65; opacity: .38; }
-.web-route-edge.is-faded { stroke-width: 1.35; opacity: .05; }
-.web-route-edge.is-lit { stroke-width: 3.2; opacity: 1; }
-.web-route-node rect { fill: color-mix(in srgb, var(--surface) 92%, var(--background)); stroke: color-mix(in srgb, var(--foreground) 36%, var(--border)); stroke-width: 1.15; vector-effect: non-scaling-stroke; transition: opacity 180ms ease, stroke-width 180ms ease; }
+.web-route-edge.is-base { stroke-width: .4; opacity: .38; }
+.web-route-edge.is-faded { stroke-width: .3; opacity: .05; }
+.web-route-edge.is-lit { stroke-width: .8; opacity: 1; }
+.web-route-node { cursor: pointer; }
+.web-route-node rect { fill: color-mix(in srgb, var(--surface) 92%, var(--background)); stroke: color-mix(in srgb, var(--foreground) 36%, var(--border)); stroke-width: 1.15; vector-effect: non-scaling-stroke; transition: opacity 180ms ease, stroke-width 180ms ease, fill 180ms ease; }
 .web-route-node.is-unknown rect { stroke-dasharray: 4 3; }
 .web-route-node-label { fill: var(--foreground); font-size: 11px; font-weight: 500; }
 .web-route-node.is-dim rect, .web-route-node.is-dim text { opacity: .3; }
 .web-route-node.is-lit rect { stroke: var(--foreground); stroke-width: 1.8; }
+.web-route-node.is-selected rect { fill: color-mix(in srgb, var(--primary) 22%, var(--surface)); stroke: var(--primary); stroke-width: 2.6; }
+.web-route-edge.is-node-route { stroke: var(--primary); }
 .web-hint { margin: -.45rem 0 0; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .72rem; letter-spacing: .02em; }
 .web-panel { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1rem 2.25rem; padding: 1.25rem 1.4rem; }
 .web-panel-title-row { display: flex; grid-column: 1 / -1; align-items: center; flex-wrap: wrap; gap: .65rem; }
@@ -500,6 +503,7 @@ body.has-web-selection .web-lab-chip:not([aria-pressed="true"]) { opacity: .45; 
 .web-panel h2 { margin: 0; font-size: 1.25rem; line-height: 1.1; text-transform: uppercase; }
 .web-panel-tag { padding: .2rem .5rem; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .7rem; }
 .web-panel > p { grid-column: 1 / -1; margin: 0; line-height: 1.55; }
+.web-node-labs { display: flex; flex-wrap: wrap; grid-column: 1 / -1; gap: .45rem; padding-top: .8rem; border-top: 1px dashed var(--border); }
 .web-panel-scores { grid-column: 1 / -1; padding-top: .8rem; border-top: 1px dashed var(--border); color: var(--muted); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: .75rem; }
 .web-panel-scores strong { color: var(--foreground); font-weight: 500; }
 .web-panel-sources { grid-column: 1 / -1; }

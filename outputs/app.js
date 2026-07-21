@@ -1442,6 +1442,8 @@
     const edgeGroup = svgEl('g');
     const requestedFocus = new URLSearchParams(window.location.search).get('focus');
     let selectedLabId = labs.some(lab => lab.id === requestedFocus) ? requestedFocus : null;
+    let selectedNodeId = null;
+    let hoveredNodeId = null;
 
     layers.forEach((layer, layerIndex) => {
       const members = nodes.filter(node => node.layer === layer.id);
@@ -1545,9 +1547,23 @@
 
     layers.forEach(layer => {
       nodes.filter(node => node.layer === layer.id).forEach(node => {
-        const group = svgEl('g', { class: `web-route-node${node.unknown ? ' is-unknown' : ''}` });
+        const group = svgEl('g', {
+          class: `web-route-node${node.unknown ? ' is-unknown' : ''}`,
+          role: 'button',
+          'aria-label': `Trace upstream and downstream routes for ${node.label}`,
+          'data-node-id': node.id
+        });
         group.appendChild(svgEl('rect', { x: node.x, y: node.y, width: COL_WIDTH, height: NODE_HEIGHT, rx: 8 }));
         addText(group, node.label, node.x + 13, node.y + NODE_HEIGHT / 2, 'web-route-node-label', 27);
+        group.addEventListener('mouseenter', () => {
+          hoveredNodeId = node.id;
+          paint(selectedLabId, node.id, false);
+        });
+        group.addEventListener('mouseleave', () => {
+          hoveredNodeId = null;
+          paint(selectedLabId, selectedNodeId, false);
+        });
+        group.addEventListener('click', () => selectNode(node.id));
         svg.appendChild(group);
         nodeGroups.set(node.id, group);
       });
@@ -1561,23 +1577,58 @@
       return new Set(edgesForLab(labId).flatMap(edge => [edge.source.id, edge.target.id]));
     }
 
-    function paint(activeLabId, animate) {
+    function traceNode(nodeId) {
+      const upstream = new Set();
+      const downstream = new Set();
+      const walk = (startId, routes, visited) => {
+        const queue = [startId];
+        while (queue.length) {
+          const currentId = queue.shift();
+          (routes.get(currentId) || []).forEach(edge => {
+            const nextId = routes === incoming ? edge.source.id : edge.target.id;
+            if (!visited.has(nextId)) {
+              visited.add(nextId);
+              queue.push(nextId);
+            }
+          });
+        }
+      };
+      walk(nodeId, incoming, upstream);
+      walk(nodeId, outgoing, downstream);
+      return { upstream, downstream, connected: new Set([nodeId, ...upstream, ...downstream]) };
+    }
+
+    function paint(activeLabId, activeNodeId, animate) {
       const activeNodes = new Set();
-      if (activeLabId) {
+      const nodeTrace = activeNodeId ? traceNode(activeNodeId) : null;
+      if (nodeTrace) {
+        nodeTrace.connected.forEach(nodeId => activeNodes.add(nodeId));
+      } else if (activeLabId) {
         nodeIdsForLab(activeLabId).forEach(nodeId => activeNodes.add(nodeId));
       }
       allEdges.forEach(edge => {
-        edge.path.setAttribute('class', !activeLabId
+        const edgeInTrace = nodeTrace && nodeTrace.connected.has(edge.source.id) && nodeTrace.connected.has(edge.target.id);
+        edge.path.setAttribute('class', !activeLabId && !nodeTrace
           ? 'web-route-edge is-base'
-          : edge.lab.id === activeLabId
+          : nodeTrace
+            ? edgeInTrace ? `web-route-edge is-lit is-node-route${animate ? ' is-animated' : ''}` : 'web-route-edge is-faded'
+            : edge.lab.id === activeLabId
             ? `web-route-edge is-lit${animate ? ' is-animated' : ''}`
             : 'web-route-edge is-faded');
       });
       nodeGroups.forEach((group, nodeId) => {
         const node = nodeById.get(nodeId);
-        group.setAttribute('class', `web-route-node${node.unknown ? ' is-unknown' : ''}${activeLabId ? activeNodes.has(nodeId) ? ' is-lit' : ' is-dim' : ''}`);
+        const isActive = activeNodes.has(nodeId);
+        const isSelected = nodeTrace && nodeId === activeNodeId;
+        group.setAttribute('class', `web-route-node${node.unknown ? ' is-unknown' : ''}${activeLabId || nodeTrace ? isActive ? ' is-lit' : ' is-dim' : ''}${isSelected ? ' is-selected' : ''}`);
       });
-      if (activeLabId) allEdges.filter(edge => edge.lab.id === activeLabId).forEach(edge => edgeGroup.appendChild(edge.path));
+      if (nodeTrace) {
+        allEdges.filter(edge => edgeInTrace(edge, nodeTrace)).forEach(edge => edgeGroup.appendChild(edge.path));
+      } else if (activeLabId) allEdges.filter(edge => edge.lab.id === activeLabId).forEach(edge => edgeGroup.appendChild(edge.path));
+    }
+
+    function edgeInTrace(edge, trace) {
+      return trace.connected.has(edge.source.id) && trace.connected.has(edge.target.id);
     }
 
     function appendPanelHeader(titleText, tagText, color) {
@@ -1601,8 +1652,37 @@
       return paragraph;
     }
 
+    function labsForNode(nodeId) {
+      return labs.filter(lab => (graph.labEdges[lab.id] || []).some(([sourceId, targetId]) => sourceId === nodeId || targetId === nodeId));
+    }
+
     function renderPanel() {
       panel.replaceChildren();
+      if (selectedNodeId) {
+        const node = nodeById.get(selectedNodeId);
+        appendPanelHeader(node.label, 'node explainer', 'var(--primary)');
+        panel.appendChild(appendParagraph(graph.nodeExplainers?.[node.id] || 'This node marks a projected station in the technology route.'));
+        const routeLabs = document.createElement('div');
+        routeLabs.className = 'web-node-labs';
+        labsForNode(node.id).slice().sort(compareLabsByFormation).forEach(lab => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'web-lab-chip';
+          button.dataset.lab = lab.id;
+          button.style.setProperty('--lab-color', colorFor(lab));
+          button.setAttribute('aria-label', `Trace ${lab.name}`);
+          button.setAttribute('aria-pressed', 'false');
+          const dot = document.createElement('span');
+          dot.className = 'web-lab-chip-dot';
+          const label = document.createElement('span');
+          label.textContent = shortLabName(lab);
+          button.append(dot, label);
+          button.addEventListener('click', () => selectLab(lab.id));
+          routeLabs.appendChild(button);
+        });
+        panel.appendChild(routeLabs);
+        return;
+      }
       if (!selectedLabId) {
         appendPanelHeader('All lines', 'reading the full map', 'var(--primary)');
         const first = appendParagraph('The map narrows as it moves right. Labs spread across many data and architecture choices, but routes converge on a smaller set of deployment surfaces and consequences. Differentiation is concentrated in the first three layers; implications are often shared.');
@@ -1649,6 +1729,8 @@
 
     function selectLab(labId) {
       selectedLabId = labId;
+      selectedNodeId = null;
+      hoveredNodeId = null;
       if (labId) setActiveLab(labId);
       else {
         const params = new URLSearchParams(window.location.search);
@@ -1661,7 +1743,24 @@
       legend.querySelectorAll('.web-lab-chip').forEach(button => {
         button.setAttribute('aria-pressed', String(button.dataset.lab === labId || (!labId && button === allButton)));
       });
-      paint(labId, true);
+      paint(labId, null, true);
+      renderPanel();
+    }
+
+    function selectNode(nodeId) {
+      selectedNodeId = selectedNodeId === nodeId ? null : nodeId;
+      selectedLabId = null;
+      hoveredNodeId = null;
+      const params = new URLSearchParams(window.location.search);
+      params.delete('focus');
+      const next = `${window.location.pathname}${params.size ? `?${params}` : ''}${window.location.hash}`;
+      window.history.replaceState(null, '', next);
+      updateViewLinks(ids, null);
+      document.body.classList.toggle('has-web-selection', Boolean(selectedNodeId));
+      legend.querySelectorAll('.web-lab-chip').forEach(button => {
+        button.setAttribute('aria-pressed', String(!selectedNodeId && button === allButton));
+      });
+      paint(null, selectedNodeId, true);
       renderPanel();
     }
 
