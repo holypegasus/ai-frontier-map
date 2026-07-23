@@ -42,890 +42,6 @@ window.NEOLABS_DATA = Object.freeze({
   },
   "labs": [
     {
-      "id": "thinking",
-      "name": "Thinking Machines Lab",
-      "shortName": "Thinking Machines",
-      "code": "TM",
-      "formation": {
-        "time": "2025.02",
-        "insightId": "thinking.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "thinking-2025-seed",
-          "date": "2025-07-15",
-          "round": "seed",
-          "amountRaisedUsd": 2000000000,
-          "valuationUsd": 12000000000,
-          "valuationType": "reported",
-          "status": "closed",
-          "insightId": "thinking.funding.2025-seed"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 3,
-        "label": "high",
-        "rationale": "Public product, leadership, financing and technical positioning are well documented.",
-        "insightId": "thinking.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 2,
-          "rationale": "Tinker fine-tuning API is live; there is no frontier consumer product yet."
-        },
-        "capability": {
-          "score": 3,
-          "rationale": "Frontier-lab ambitions and multimodal model work support a high target-capability score."
-        },
-        "dataEfficiency": {
-          "score": 2,
-          "rationale": "Customization leverages existing models, but the underlying training regime still needs substantial data."
-        },
-        "computeEfficiency": {
-          "score": 2,
-          "rationale": "Fine-tuning can be more efficient than pretraining for many uses; a broad efficiency lead is not demonstrated."
-        },
-        "adaptivity": {
-          "score": 2,
-          "rationale": "Per-user customization and weight adaptation are central to the product thesis."
-        },
-        "controllability": {
-          "score": 2,
-          "rationale": "Determinism, reproducibility, and steerability are explicit research and product focuses."
-        }
-      },
-      "note": "Builds frontier, customizable multimodal AI for human collaboration, pairing strong models with tools that let people adapt model weights and shape system behavior.",
-      "keywords": [
-        "customizable models"
-      ],
-      "noteInsightId": "thinking.thesis",
-      "keyPeople": [
-        {
-          "name": "Mira Murati",
-          "role": "CEO & Co-founder",
-          "pastExperiences": [
-            "Former CTO of OpenAI",
-            "Led product and research work spanning ChatGPT, DALL·E and frontier multimodal systems"
-          ]
-        },
-        {
-          "name": "Barret Zoph",
-          "role": "CTO & Co-founder",
-          "pastExperiences": [
-            "Former VP of Research (Post-Training) at OpenAI",
-            "Former Google Brain researcher known for neural architecture search"
-          ]
-        },
-        {
-          "name": "John Schulman",
-          "role": "Chief Scientist & Co-founder",
-          "pastExperiences": [
-            "Co-founded OpenAI and led reinforcement-learning research including PPO",
-            "Former researcher at Anthropic"
-          ]
-        }
-      ],
-      "website": "https://thinkingmachines.ai/"
-    },
-    {
-      "id": "ssi",
-      "name": "SSI (Safe Superintelligence)",
-      "shortName": "Safe SI",
-      "code": "SSI",
-      "formation": {
-        "time": "2024.06",
-        "insightId": "ssi.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "ssi-2024-seed",
-          "date": "2024-09-04",
-          "round": "seed",
-          "amountRaisedUsd": 1000000000,
-          "valuationUsd": 5000000000,
-          "valuationType": "reported",
-          "status": "closed",
-          "insightId": "ssi.funding.2024-seed"
-        },
-        {
-          "id": "ssi-2025-round",
-          "date": "2025-04-12",
-          "round": "private",
-          "amountRaisedUsd": 2000000000,
-          "valuationUsd": 32000000000,
-          "valuationType": "reported",
-          "status": "closed",
-          "insightId": "ssi.funding.2025-round"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 1,
-        "label": "limited",
-        "rationale": "Mission and financing are public, but technical architecture, milestones and operations remain deliberately sparse.",
-        "insightId": "ssi.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 0,
-          "rationale": "The lab deliberately has no product until its end goal is achieved."
-        },
-        "capability": {
-          "score": 3,
-          "rationale": "Superintelligence is the stated objective, with no lesser capability target disclosed."
-        },
-        "dataEfficiency": {
-          "score": 1,
-          "rationale": "The method is undisclosed; public reporting suggests divergence from pure scaling, but this is unverifiable."
-        },
-        "computeEfficiency": {
-          "score": 1,
-          "rationale": "The lab is associated with frontier-scale compute needs and offers no public efficiency evidence."
-        },
-        "adaptivity": {
-          "score": 1,
-          "rationale": "The method is undisclosed and no adaptive system is publicly demonstrated."
-        },
-        "controllability": {
-          "score": 3,
-          "rationale": "Safety is the founding premise and explicit goal, although the technical method is not public."
-        }
-      },
-      "note": "A straight-shot lab whose sole roadmap is safe superintelligence, treating capability and safety as coupled technical problems insulated from product cycles.",
-      "keywords": [
-        "safe superintelligence"
-      ],
-      "noteInsightId": "ssi.thesis",
-      "keyPeople": [
-        {
-          "name": "Ilya Sutskever",
-          "role": "CEO & Co-founder",
-          "pastExperiences": [
-            "Co-founded OpenAI and served as Chief Scientist",
-            "Former Google Brain researcher and major contributor to modern deep learning"
-          ]
-        },
-        {
-          "name": "Daniel Levy",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Former OpenAI researcher",
-            "Worked on optimization and training for frontier-scale models"
-          ]
-        }
-      ],
-      "website": "https://ssi.inc/"
-    },
-    {
-      "id": "ineffable",
-      "name": "Ineffable Intelligence",
-      "shortName": "Ineffable",
-      "code": "INE",
-      "formation": {
-        "time": "2025",
-        "insightId": "ineffable.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "ineffable-2026-seed",
-          "date": "2026-04-27",
-          "round": "seed",
-          "amountRaisedUsd": 1100000000,
-          "valuationUsd": 5100000000,
-          "valuationType": "reported",
-          "status": "closed",
-          "insightId": "ineffable.funding.2026-seed"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 1,
-        "label": "limited",
-        "rationale": "The learning thesis and financing are public, while implementation details and technical artifacts remain limited.",
-        "insightId": "ineffable.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 0,
-          "rationale": "Pre-product; the lab is building reinforcement-learning infrastructure with Nvidia."
-        },
-        "capability": {
-          "score": 3,
-          "rationale": "The stated goal is a superlearner that discovers knowledge beyond human data."
-        },
-        "dataEfficiency": {
-          "score": 3,
-          "rationale": "It aims to use little or no human-data pretraining, trading it for experience generated through self-play."
-        },
-        "computeEfficiency": {
-          "score": 1,
-          "rationale": "Online act-observe-update loops are compute- and interconnect-intensive."
-        },
-        "adaptivity": {
-          "score": 3,
-          "rationale": "Continual learning from experience is the core thesis."
-        },
-        "controllability": {
-          "score": 1,
-          "rationale": "Reward specification and reward hacking remain unresolved at the proposed capability level."
-        }
-      },
-      "note": "Pursues a continually learning “superlearner” that discovers knowledge from experience through large-scale reinforcement learning rather than relying on human-generated data.",
-      "keywords": [
-        "reinforcement learning"
-      ],
-      "noteInsightId": "ineffable.thesis",
-      "keyPeople": [
-        {
-          "name": "David Silver",
-          "role": "Founder & CEO",
-          "pastExperiences": [
-            "Led AlphaGo, AlphaZero and reinforcement-learning research at Google DeepMind",
-            "Professor at University College London"
-          ]
-        }
-      ],
-      "website": "https://www.ineffable.ai/"
-    },
-    {
-      "id": "recursive",
-      "name": "Recursive Superintelligence",
-      "shortName": "Recursive SI",
-      "code": "RSI",
-      "formation": {
-        "time": "2025.12",
-        "insightId": "recursive.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "recursive-2026-round",
-          "date": "2026-05-13",
-          "round": "private",
-          "amountRaisedUsd": 650000000,
-          "valuationUsd": 4650000000,
-          "valuationType": "post-money",
-          "status": "closed",
-          "insightId": "recursive.funding.2026-round"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 2,
-        "label": "moderate",
-        "rationale": "Team, financing and high-level research direction are public; detailed methods and evidence remain early.",
-        "insightId": "recursive.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 0,
-          "rationale": "No flagship output is disclosed; the direction is automated self-improvement of AI pipelines."
-        },
-        "capability": {
-          "score": 3,
-          "rationale": "The thesis is to automate ideation, implementation, and validation so AI can improve itself."
-        },
-        "dataEfficiency": {
-          "score": 2,
-          "rationale": "Self-generated tasks and evolutionary populations reduce reliance on curated human data."
-        },
-        "computeEfficiency": {
-          "score": 1,
-          "rationale": "Open-ended search over populations is compute-voracious."
-        },
-        "adaptivity": {
-          "score": 3,
-          "rationale": "Self-modification and recursive improvement are the product thesis."
-        },
-        "controllability": {
-          "score": 0,
-          "rationale": "Recursive self-improvement is the canonical hard-to-control regime, with the loop designed to exclude humans."
-        }
-      },
-      "note": "Aims to automate AI research through open-ended algorithms and recursive self-improvement, then apply the same compounding discovery loop across scientific fields.",
-      "keywords": [
-        "recursive self-improvement"
-      ],
-      "noteInsightId": "recursive.thesis",
-      "keyPeople": [
-        {
-          "name": "Richard Socher",
-          "role": "CEO & Co-founder",
-          "pastExperiences": [
-            "Former Chief Scientist at Salesforce after founding MetaMind",
-            "Founder of You.com and former Stanford NLP researcher"
-          ]
-        },
-        {
-          "name": "Tim Rocktäschel",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Formerly led open-endedness and self-improvement research at Google DeepMind",
-            "Professor at University College London"
-          ]
-        },
-        {
-          "name": "Jeff Clune",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Former research leader at OpenAI and Uber AI Labs",
-            "Professor known for open-ended algorithms and AI-generating algorithms"
-          ]
-        },
-        {
-          "name": "Tim Shi",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Co-founded Cresta",
-            "Early team member at OpenAI"
-          ]
-        }
-      ],
-      "website": "https://www.recursive.com/"
-    },
-    {
-      "id": "sakana",
-      "name": "Sakana AI",
-      "shortName": "Sakana",
-      "code": "SAK",
-      "formation": {
-        "time": "2023.07",
-        "insightId": "sakana.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "sakana-2024-series-a",
-          "date": "2024-09-04",
-          "round": "series-a",
-          "amountRaisedUsd": 200000000,
-          "valuationUsd": 1100000000,
-          "valuationType": "reported",
-          "status": "closed",
-          "insightId": "sakana.funding.2024-series-a"
-        },
-        {
-          "id": "sakana-2025-series-b",
-          "date": "2025-11-17",
-          "round": "series-b",
-          "amountRaisedUsd": 200000000,
-          "valuationUsd": 2700000000,
-          "valuationType": "post-money",
-          "status": "closed",
-          "insightId": "sakana.funding.2025-series-b"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 3,
-        "label": "high",
-        "rationale": "Extensive papers, product deployments, company updates and financing details are public.",
-        "insightId": "sakana.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 2,
-          "rationale": "Enterprise work and the AI Scientist are shipping in Japan."
-        },
-        "capability": {
-          "score": 2,
-          "rationale": "The lab pursues novel intelligence without chasing frontier scale head-on."
-        },
-        "dataEfficiency": {
-          "score": 3,
-          "rationale": "Model merging and recombination reuse existing models rather than pretraining from scratch."
-        },
-        "computeEfficiency": {
-          "score": 3,
-          "rationale": "Efficiency is the core thesis, including smaller and recombined systems."
-        },
-        "adaptivity": {
-          "score": 2,
-          "rationale": "Evolution is inherently adaptive, though adaptation is generally per-deployment."
-        },
-        "controllability": {
-          "score": 1,
-          "rationale": "Evolved and merged systems can be difficult to audit."
-        }
-      },
-      "note": "Explores nature-inspired, evolutionary, collective and automated-research approaches to capable AI, emphasizing efficiency and architectural diversity.",
-      "keywords": [
-        "evolutionary AI"
-      ],
-      "noteInsightId": "sakana.thesis",
-      "keyPeople": [
-        {
-          "name": "David Ha",
-          "role": "CEO & Co-founder",
-          "pastExperiences": [
-            "Former research scientist at Google Brain",
-            "Former Head of Research at Stability AI"
-          ]
-        },
-        {
-          "name": "Llion Jones",
-          "role": "CTO & Co-founder",
-          "pastExperiences": [
-            "Former Google researcher",
-            "Co-author of the Transformer paper “Attention Is All You Need”"
-          ]
-        },
-        {
-          "name": "Ren Ito",
-          "role": "Chairman & Co-founder",
-          "pastExperiences": [
-            "Technology executive and investor",
-            "Former Mercari executive"
-          ]
-        }
-      ],
-      "website": "https://sakana.ai/"
-    },
-    {
-      "id": "liquid",
-      "name": "Liquid AI",
-      "shortName": "Liquid AI",
-      "code": "LIQ",
-      "formation": {
-        "time": "2023.12",
-        "insightId": "liquid.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "liquid-2023-seed",
-          "date": "2023-12-06",
-          "round": "seed",
-          "amountRaisedUsd": 37500000,
-          "valuationUsd": null,
-          "valuationType": "undisclosed",
-          "status": "closed",
-          "insightId": "liquid.funding.2023-seed"
-        },
-        {
-          "id": "liquid-2024-series-a",
-          "date": "2024-12-13",
-          "round": "series-a",
-          "amountRaisedUsd": 250000000,
-          "valuationUsd": 2300000000,
-          "valuationType": "reported",
-          "status": "closed",
-          "insightId": "liquid.funding.2024-series-a"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 3,
-        "label": "high",
-        "rationale": "Models, research, products, founders and major funding rounds are documented publicly.",
-        "insightId": "liquid.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 2,
-          "rationale": "LFMs and an edge-deployment platform are shipping."
-        },
-        "capability": {
-          "score": 1,
-          "rationale": "Best-in-class small models are demonstrated, but this is not primarily an AGI-scale bet."
-        },
-        "dataEfficiency": {
-          "score": 2,
-          "rationale": "Smaller models need less data and compute, but they remain pretrained systems."
-        },
-        "computeEfficiency": {
-          "score": 3,
-          "rationale": "On-device, low-power inference is the central selling point."
-        },
-        "adaptivity": {
-          "score": 3,
-          "rationale": "Continuous-time dynamics adapt at inference by construction."
-        },
-        "controllability": {
-          "score": 2,
-          "rationale": "Dynamical-systems formalism is more analyzable, with the claim partially validated."
-        }
-      },
-      "note": "Builds efficiency-first foundation models from first principles, optimized for capability, low compute and memory use, on-device deployment, interpretability and privacy.",
-      "keywords": [
-        "liquid neural net"
-      ],
-      "noteInsightId": "liquid.thesis",
-      "keyPeople": [
-        {
-          "name": "Ramin Hasani",
-          "role": "CEO & Co-founder",
-          "pastExperiences": [
-            "Former Principal AI and Machine Learning Scientist at Vanguard",
-            "MIT CSAIL scientist and pioneer of liquid neural netldks"
-          ]
-        },
-        {
-          "name": "Mathias Lechner",
-          "role": "CTO & Co-founder",
-          "pastExperiences": [
-            "MIT CSAIL research affiliate",
-            "Co-developed liquid neural networks at TU Wien and MIT"
-          ]
-        },
-        {
-          "name": "Alexander Amini",
-          "role": "Chief Scientific Officer & Co-founder",
-          "pastExperiences": [
-            "MIT CSAIL researcher and educator",
-            "Research in robust autonomous and generative systems"
-          ]
-        },
-        {
-          "name": "Daniela Rus",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Director of MIT CSAIL",
-            "Robotics and autonomous-systems pioneer"
-          ]
-        }
-      ],
-      "website": "https://www.liquid.ai/"
-    },
-    {
-      "id": "ndea",
-      "name": "Ndea",
-      "shortName": "Ndea",
-      "code": "NDE",
-      "formation": {
-        "time": "2024",
-        "insightId": "ndea.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "ndea-2025-launch",
-          "date": "2025-01-15",
-          "round": "undisclosed",
-          "amountRaisedUsd": null,
-          "valuationUsd": null,
-          "valuationType": "undisclosed",
-          "status": "not-publicly-disclosed",
-          "insightId": "ndea.funding.2025-launch"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 3,
-        "label": "high",
-        "rationale": "The program-synthesis thesis and founders are explicit, although financing remains undisclosed.",
-        "insightId": "ndea.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 0,
-          "rationale": "Research lab with no product disclosed."
-        },
-        "capability": {
-          "score": 2,
-          "rationale": "AGI is framed as efficient skill acquisition, with science automation as a major ambition."
-        },
-        "dataEfficiency": {
-          "score": 3,
-          "rationale": "Few-shot abstraction and the ARC lineage are the philosophical thesis."
-        },
-        "computeEfficiency": {
-          "score": 2,
-          "rationale": "Search is expensive, but synthesized programs are cheap to run once found."
-        },
-        "adaptivity": {
-          "score": 3,
-          "rationale": "Test-time adaptation to novel tasks is the goal."
-        },
-        "controllability": {
-          "score": 3,
-          "rationale": "Synthesized programs are intended to be human-readable and verifiable."
-        }
-      },
-      "note": "Combines deep learning with program synthesis to build systems that invent abstractions and adapt to genuinely novel problems, with ARC-AGI as a central measure of progress.",
-      "keywords": [
-        "program synthesis"
-      ],
-      "noteInsightId": "ndea.thesis",
-      "keyPeople": [
-        {
-          "name": "François Chollet",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Created Keras and ARC-AGI",
-            "Former Google engineer and author of “Deep Learning with Python”"
-          ]
-        },
-        {
-          "name": "Mike Knoop",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Co-founded Zapier and led product and engineering as President",
-            "Co-founded the ARC Prize Foundation"
-          ]
-        }
-      ],
-      "website": "https://ndea.com/"
-    },
-    {
-      "id": "ami",
-      "name": "AMI Labs",
-      "shortName": "AMI",
-      "code": "AMI",
-      "formation": {
-        "time": "2025.12",
-        "insightId": "ami.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "ami-2026-seed",
-          "date": "2026-03-10",
-          "round": "seed",
-          "amountRaisedUsd": 1030000000,
-          "valuationUsd": 3500000000,
-          "valuationType": "pre-money",
-          "status": "closed",
-          "insightId": "ami.funding.2026-seed"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 2,
-        "label": "moderate",
-        "rationale": "Mission, founders and financing are public; the lab is young and detailed technical execution remains limited.",
-        "insightId": "ami.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 0,
-          "rationale": "Explicitly a research organization; no saleable product is expected on the near-term horizon."
-        },
-        "capability": {
-          "score": 3,
-          "rationale": "The thesis targets human-level intelligence through persistent memory, reasoning, and planning."
-        },
-        "dataEfficiency": {
-          "score": 2,
-          "rationale": "JEPA-style representations avoid pixel-level prediction and emphasize abstract learning from observation."
-        },
-        "computeEfficiency": {
-          "score": 2,
-          "rationale": "Modular, objective-driven world models are pitched as more efficient than generative alternatives."
-        },
-        "adaptivity": {
-          "score": 3,
-          "rationale": "Persistent memory and domain-specific world models are designed to update from experience."
-        },
-        "controllability": {
-          "score": 2,
-          "rationale": "Modular objectives and learned dynamics are pitched as controllable by construction, though unproven."
-        }
-      },
-      "note": "Bets that action-conditioned world models—not language prediction alone—are the path to reasoning, planning, persistent memory and controllable real-world intelligence.",
-      "keywords": [
-        "world models"
-      ],
-      "noteInsightId": "ami.thesis",
-      "keyPeople": [
-        {
-          "name": "Yann LeCun",
-          "role": "Executive Chairman & Co-founder",
-          "pastExperiences": [
-            "Former Chief AI Scientist at Meta",
-            "NYU professor, Bell Labs alumnus and 2018 Turing Award laureate"
-          ]
-        },
-        {
-          "name": "Alex LeBrun",
-          "role": "CEO",
-          "pastExperiences": [
-            "Co-founded and led healthcare AI company Nabla",
-            "Founded Wit.ai, acquired by Facebook"
-          ]
-        }
-      ],
-      "website": "https://amilabs.xyz/"
-    },
-    {
-      "id": "worldlabs",
-      "name": "World Labs",
-      "shortName": "World Labs",
-      "code": "WL",
-      "formation": {
-        "time": "2024.04",
-        "insightId": "worldlabs.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "worldlabs-2024-early",
-          "date": "2024-09-13",
-          "round": "early-stage-aggregate",
-          "amountRaisedUsd": 230000000,
-          "valuationUsd": 1000000000,
-          "valuationType": "reported-floor",
-          "status": "closed",
-          "insightId": "worldlabs.funding.2024-early"
-        },
-        {
-          "id": "worldlabs-2026-round",
-          "date": "2026-02-18",
-          "round": "private",
-          "amountRaisedUsd": 1000000000,
-          "valuationUsd": 5000000000,
-          "valuationType": "reported-in-talks",
-          "status": "closed-valuation-undisclosed",
-          "insightId": "worldlabs.funding.2026-round"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 3,
-        "label": "high",
-        "rationale": "Products, research framing, founders and financing are substantially documented.",
-        "insightId": "worldlabs.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 2,
-          "rationale": "Marble has launched as a product."
-        },
-        "capability": {
-          "score": 2,
-          "rationale": "Spatial intelligence is framed as an AGI pillar, not the whole capability stack."
-        },
-        "dataEfficiency": {
-          "score": 1,
-          "rationale": "3D and video workloads are data-hungry."
-        },
-        "computeEfficiency": {
-          "score": 1,
-          "rationale": "Generative 3D workloads remain heavy, despite ongoing efficiency work."
-        },
-        "adaptivity": {
-          "score": 2,
-          "rationale": "Persistent, editable worlds help, but adaptive agents are not yet demonstrated."
-        },
-        "controllability": {
-          "score": 3,
-          "rationale": "Explicit 3D representations are inspectable and editable."
-        }
-      },
-      "note": "Builds spatially intelligent world models that perceive, generate, reason about and interact with 3D worlds; Marble turns prompts and media into persistent 3D environments.",
-      "keywords": [
-        "spatial intelligence"
-      ],
-      "noteInsightId": "worldlabs.thesis",
-      "keyPeople": [
-        {
-          "name": "Fei-Fei Li",
-          "role": "CEO & Co-founder",
-          "pastExperiences": [
-            "Created ImageNet and co-directs Stanford HAI",
-            "Former Chief Scientist of AI/ML at Google Cloud"
-          ]
-        },
-        {
-          "name": "Justin Johnson",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Former research scientist at Meta AI",
-            "Computer-vision and graphics researcher and Stanford professor"
-          ]
-        },
-        {
-          "name": "Christoph Lassner",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Former researcher at Meta Reality Labs and Epic Games",
-            "Specialist in neural rendering and 3D vision"
-          ]
-        },
-        {
-          "name": "Ben Mildenhall",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Former Google Research scientist",
-            "Co-inventor of Neural Radiance Fields (NeRF)"
-          ]
-        }
-      ],
-      "website": "https://www.worldlabs.ai/"
-    },
-    {
-      "id": "inception",
-      "name": "Inception Labs",
-      "shortName": "Inception",
-      "code": "INC",
-      "formation": {
-        "time": "2024",
-        "insightId": "inception.formation"
-      },
-      "fundingHistory": [
-        {
-          "id": "inception-2025-seed",
-          "date": "2025-11-06",
-          "round": "seed",
-          "amountRaisedUsd": 50000000,
-          "valuationUsd": null,
-          "valuationType": "undisclosed",
-          "status": "closed",
-          "insightId": "inception.funding.2025-seed"
-        }
-      ],
-      "disclosureConfidence": {
-        "score": 3,
-        "label": "high",
-        "rationale": "Commercial models, technical differentiation, founders and financing are publicly documented.",
-        "insightId": "inception.disclosure"
-      },
-      "scores": {
-        "readiness": {
-          "score": 2,
-          "rationale": "Mercury is commercially available through an API."
-        },
-        "capability": {
-          "score": 2,
-          "rationale": "It is a better generation paradigm rather than a complete AGI thesis."
-        },
-        "dataEfficiency": {
-          "score": 1,
-          "rationale": "Diffusion decoding changes the generation process, not the comparable data appetite of the model."
-        },
-        "computeEfficiency": {
-          "score": 3,
-          "rationale": "Parallel decoding is intended to deliver major throughput gains."
-        },
-        "adaptivity": {
-          "score": 2,
-          "rationale": "Native editing and infilling support adjustment during generation."
-        },
-        "controllability": {
-          "score": 3,
-          "rationale": "Diffusion permits constrained and structured generation."
-        }
-      },
-      "note": "Replaces sequential autoregressive decoding with diffusion-based language generation for parallel refinement, lower latency and cost, and editable production AI.",
-      "keywords": [
-        "diffusion language models"
-      ],
-      "noteInsightId": "inception.thesis",
-      "keyPeople": [
-        {
-          "name": "Stefano Ermon",
-          "role": "CEO & Co-founder",
-          "pastExperiences": [
-            "Stanford professor and pioneer of score-based generative modeling",
-            "Research leader in diffusion models and probabilistic AI"
-          ]
-        },
-        {
-          "name": "Aditya Grover",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "UCLA professor and former Stanford researcher",
-            "Co-inventor of Decision Transformers and researcher in generative modeling"
-          ]
-        },
-        {
-          "name": "Volodymyr Kuleshov",
-          "role": "Co-founder",
-          "pastExperiences": [
-            "Cornell professor",
-            "Researcher in generative modeling, trustworthy machine learning and AI for science"
-          ]
-        }
-      ],
-      "website": "https://www.inceptionlabs.ai/"
-    },
-    {
       "id": "openai",
       "name": "OpenAI",
       "shortName": "OpenAI",
@@ -1160,6 +276,890 @@ window.NEOLABS_DATA = Object.freeze({
         }
       ],
       "website": "https://www.anthropic.com/"
+    },
+    {
+      "id": "sakana",
+      "name": "Sakana AI",
+      "shortName": "Sakana",
+      "code": "SAK",
+      "formation": {
+        "time": "2023.07",
+        "insightId": "sakana.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "sakana-2024-series-a",
+          "date": "2024-09-04",
+          "round": "series-a",
+          "amountRaisedUsd": 200000000,
+          "valuationUsd": 1100000000,
+          "valuationType": "reported",
+          "status": "closed",
+          "insightId": "sakana.funding.2024-series-a"
+        },
+        {
+          "id": "sakana-2025-series-b",
+          "date": "2025-11-17",
+          "round": "series-b",
+          "amountRaisedUsd": 200000000,
+          "valuationUsd": 2700000000,
+          "valuationType": "post-money",
+          "status": "closed",
+          "insightId": "sakana.funding.2025-series-b"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 3,
+        "label": "high",
+        "rationale": "Extensive papers, product deployments, company updates and financing details are public.",
+        "insightId": "sakana.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 2,
+          "rationale": "Enterprise work and the AI Scientist are shipping in Japan."
+        },
+        "capability": {
+          "score": 2,
+          "rationale": "The lab pursues novel intelligence without chasing frontier scale head-on."
+        },
+        "dataEfficiency": {
+          "score": 3,
+          "rationale": "Model merging and recombination reuse existing models rather than pretraining from scratch."
+        },
+        "computeEfficiency": {
+          "score": 3,
+          "rationale": "Efficiency is the core thesis, including smaller and recombined systems."
+        },
+        "adaptivity": {
+          "score": 2,
+          "rationale": "Evolution is inherently adaptive, though adaptation is generally per-deployment."
+        },
+        "controllability": {
+          "score": 1,
+          "rationale": "Evolved and merged systems can be difficult to audit."
+        }
+      },
+      "note": "Explores nature-inspired, evolutionary, collective and automated-research approaches to capable AI, emphasizing efficiency and architectural diversity.",
+      "keywords": [
+        "evolutionary"
+      ],
+      "noteInsightId": "sakana.thesis",
+      "keyPeople": [
+        {
+          "name": "David Ha",
+          "role": "CEO & Co-founder",
+          "pastExperiences": [
+            "Former research scientist at Google Brain",
+            "Former Head of Research at Stability AI"
+          ]
+        },
+        {
+          "name": "Llion Jones",
+          "role": "CTO & Co-founder",
+          "pastExperiences": [
+            "Former Google researcher",
+            "Co-author of the Transformer paper “Attention Is All You Need”"
+          ]
+        },
+        {
+          "name": "Ren Ito",
+          "role": "Chairman & Co-founder",
+          "pastExperiences": [
+            "Technology executive and investor",
+            "Former Mercari executive"
+          ]
+        }
+      ],
+      "website": "https://sakana.ai/"
+    },
+    {
+      "id": "liquid",
+      "name": "Liquid AI",
+      "shortName": "Liquid AI",
+      "code": "LIQ",
+      "formation": {
+        "time": "2023.12",
+        "insightId": "liquid.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "liquid-2023-seed",
+          "date": "2023-12-06",
+          "round": "seed",
+          "amountRaisedUsd": 37500000,
+          "valuationUsd": null,
+          "valuationType": "undisclosed",
+          "status": "closed",
+          "insightId": "liquid.funding.2023-seed"
+        },
+        {
+          "id": "liquid-2024-series-a",
+          "date": "2024-12-13",
+          "round": "series-a",
+          "amountRaisedUsd": 250000000,
+          "valuationUsd": 2300000000,
+          "valuationType": "reported",
+          "status": "closed",
+          "insightId": "liquid.funding.2024-series-a"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 3,
+        "label": "high",
+        "rationale": "Models, research, products, founders and major funding rounds are documented publicly.",
+        "insightId": "liquid.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 2,
+          "rationale": "LFMs and an edge-deployment platform are shipping."
+        },
+        "capability": {
+          "score": 1,
+          "rationale": "Best-in-class small models are demonstrated, but this is not primarily an AGI-scale bet."
+        },
+        "dataEfficiency": {
+          "score": 2,
+          "rationale": "Smaller models need less data and compute, but they remain pretrained systems."
+        },
+        "computeEfficiency": {
+          "score": 3,
+          "rationale": "On-device, low-power inference is the central selling point."
+        },
+        "adaptivity": {
+          "score": 3,
+          "rationale": "Continuous-time dynamics adapt at inference by construction."
+        },
+        "controllability": {
+          "score": 2,
+          "rationale": "Dynamical-systems formalism is more analyzable, with the claim partially validated."
+        }
+      },
+      "note": "Builds efficiency-first foundation models from first principles, optimized for capability, low compute and memory use, on-device deployment, interpretability and privacy.",
+      "keywords": [
+        "liquid neural net"
+      ],
+      "noteInsightId": "liquid.thesis",
+      "keyPeople": [
+        {
+          "name": "Ramin Hasani",
+          "role": "CEO & Co-founder",
+          "pastExperiences": [
+            "Former Principal AI and Machine Learning Scientist at Vanguard",
+            "MIT CSAIL scientist and pioneer of liquid neural netldks"
+          ]
+        },
+        {
+          "name": "Mathias Lechner",
+          "role": "CTO & Co-founder",
+          "pastExperiences": [
+            "MIT CSAIL research affiliate",
+            "Co-developed liquid neural networks at TU Wien and MIT"
+          ]
+        },
+        {
+          "name": "Alexander Amini",
+          "role": "Chief Scientific Officer & Co-founder",
+          "pastExperiences": [
+            "MIT CSAIL researcher and educator",
+            "Research in robust autonomous and generative systems"
+          ]
+        },
+        {
+          "name": "Daniela Rus",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Director of MIT CSAIL",
+            "Robotics and autonomous-systems pioneer"
+          ]
+        }
+      ],
+      "website": "https://www.liquid.ai/"
+    },
+    {
+      "id": "worldlabs",
+      "name": "World Labs",
+      "shortName": "World Labs",
+      "code": "WL",
+      "formation": {
+        "time": "2024.04",
+        "insightId": "worldlabs.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "worldlabs-2024-early",
+          "date": "2024-09-13",
+          "round": "early-stage-aggregate",
+          "amountRaisedUsd": 230000000,
+          "valuationUsd": 1000000000,
+          "valuationType": "reported-floor",
+          "status": "closed",
+          "insightId": "worldlabs.funding.2024-early"
+        },
+        {
+          "id": "worldlabs-2026-round",
+          "date": "2026-02-18",
+          "round": "private",
+          "amountRaisedUsd": 1000000000,
+          "valuationUsd": 5000000000,
+          "valuationType": "reported-in-talks",
+          "status": "closed-valuation-undisclosed",
+          "insightId": "worldlabs.funding.2026-round"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 3,
+        "label": "high",
+        "rationale": "Products, research framing, founders and financing are substantially documented.",
+        "insightId": "worldlabs.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 2,
+          "rationale": "Marble has launched as a product."
+        },
+        "capability": {
+          "score": 2,
+          "rationale": "Spatial intelligence is framed as an AGI pillar, not the whole capability stack."
+        },
+        "dataEfficiency": {
+          "score": 1,
+          "rationale": "3D and video workloads are data-hungry."
+        },
+        "computeEfficiency": {
+          "score": 1,
+          "rationale": "Generative 3D workloads remain heavy, despite ongoing efficiency work."
+        },
+        "adaptivity": {
+          "score": 2,
+          "rationale": "Persistent, editable worlds help, but adaptive agents are not yet demonstrated."
+        },
+        "controllability": {
+          "score": 3,
+          "rationale": "Explicit 3D representations are inspectable and editable."
+        }
+      },
+      "note": "Builds spatially intelligent world models that perceive, generate, reason about and interact with 3D worlds; Marble turns prompts and media into persistent 3D environments.",
+      "keywords": [
+        "world model"
+      ],
+      "noteInsightId": "worldlabs.thesis",
+      "keyPeople": [
+        {
+          "name": "Fei-Fei Li",
+          "role": "CEO & Co-founder",
+          "pastExperiences": [
+            "Created ImageNet and co-directs Stanford HAI",
+            "Former Chief Scientist of AI/ML at Google Cloud"
+          ]
+        },
+        {
+          "name": "Justin Johnson",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Former research scientist at Meta AI",
+            "Computer-vision and graphics researcher and Stanford professor"
+          ]
+        },
+        {
+          "name": "Christoph Lassner",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Former researcher at Meta Reality Labs and Epic Games",
+            "Specialist in neural rendering and 3D vision"
+          ]
+        },
+        {
+          "name": "Ben Mildenhall",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Former Google Research scientist",
+            "Co-inventor of Neural Radiance Fields (NeRF)"
+          ]
+        }
+      ],
+      "website": "https://www.worldlabs.ai/"
+    },
+    {
+      "id": "ssi",
+      "name": "SSI (Safe Superintelligence)",
+      "shortName": "Safe SI",
+      "code": "SSI",
+      "formation": {
+        "time": "2024.06",
+        "insightId": "ssi.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "ssi-2024-seed",
+          "date": "2024-09-04",
+          "round": "seed",
+          "amountRaisedUsd": 1000000000,
+          "valuationUsd": 5000000000,
+          "valuationType": "reported",
+          "status": "closed",
+          "insightId": "ssi.funding.2024-seed"
+        },
+        {
+          "id": "ssi-2025-round",
+          "date": "2025-04-12",
+          "round": "private",
+          "amountRaisedUsd": 2000000000,
+          "valuationUsd": 32000000000,
+          "valuationType": "reported",
+          "status": "closed",
+          "insightId": "ssi.funding.2025-round"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 1,
+        "label": "limited",
+        "rationale": "Mission and financing are public, but technical architecture, milestones and operations remain deliberately sparse.",
+        "insightId": "ssi.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 0,
+          "rationale": "The lab deliberately has no product until its end goal is achieved."
+        },
+        "capability": {
+          "score": 3,
+          "rationale": "Superintelligence is the stated objective, with no lesser capability target disclosed."
+        },
+        "dataEfficiency": {
+          "score": 1,
+          "rationale": "The method is undisclosed; public reporting suggests divergence from pure scaling, but this is unverifiable."
+        },
+        "computeEfficiency": {
+          "score": 1,
+          "rationale": "The lab is associated with frontier-scale compute needs and offers no public efficiency evidence."
+        },
+        "adaptivity": {
+          "score": 1,
+          "rationale": "The method is undisclosed and no adaptive system is publicly demonstrated."
+        },
+        "controllability": {
+          "score": 3,
+          "rationale": "Safety is the founding premise and explicit goal, although the technical method is not public."
+        }
+      },
+      "note": "A straight-shot lab whose sole roadmap is safe superintelligence, treating capability and safety as coupled technical problems insulated from product cycles.",
+      "keywords": [
+        "safe superintelligence"
+      ],
+      "noteInsightId": "ssi.thesis",
+      "keyPeople": [
+        {
+          "name": "Ilya Sutskever",
+          "role": "CEO & Co-founder",
+          "pastExperiences": [
+            "Co-founded OpenAI and served as Chief Scientist",
+            "Former Google Brain researcher and major contributor to modern deep learning"
+          ]
+        },
+        {
+          "name": "Daniel Levy",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Former OpenAI researcher",
+            "Worked on optimization and training for frontier-scale models"
+          ]
+        }
+      ],
+      "website": "https://ssi.inc/"
+    },
+    {
+      "id": "inception",
+      "name": "Inception Labs",
+      "shortName": "Inception",
+      "code": "INC",
+      "formation": {
+        "time": "2024",
+        "insightId": "inception.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "inception-2025-seed",
+          "date": "2025-11-06",
+          "round": "seed",
+          "amountRaisedUsd": 50000000,
+          "valuationUsd": null,
+          "valuationType": "undisclosed",
+          "status": "closed",
+          "insightId": "inception.funding.2025-seed"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 3,
+        "label": "high",
+        "rationale": "Commercial models, technical differentiation, founders and financing are publicly documented.",
+        "insightId": "inception.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 2,
+          "rationale": "Mercury is commercially available through an API."
+        },
+        "capability": {
+          "score": 2,
+          "rationale": "It is a better generation paradigm rather than a complete AGI thesis."
+        },
+        "dataEfficiency": {
+          "score": 1,
+          "rationale": "Diffusion decoding changes the generation process, not the comparable data appetite of the model."
+        },
+        "computeEfficiency": {
+          "score": 3,
+          "rationale": "Parallel decoding is intended to deliver major throughput gains."
+        },
+        "adaptivity": {
+          "score": 2,
+          "rationale": "Native editing and infilling support adjustment during generation."
+        },
+        "controllability": {
+          "score": 3,
+          "rationale": "Diffusion permits constrained and structured generation."
+        }
+      },
+      "note": "Replaces sequential autoregressive decoding with diffusion-based language generation for parallel refinement, lower latency and cost, and editable production AI.",
+      "keywords": [
+        "diffusion"
+      ],
+      "noteInsightId": "inception.thesis",
+      "keyPeople": [
+        {
+          "name": "Stefano Ermon",
+          "role": "CEO & Co-founder",
+          "pastExperiences": [
+            "Stanford professor and pioneer of score-based generative modeling",
+            "Research leader in diffusion models and probabilistic AI"
+          ]
+        },
+        {
+          "name": "Aditya Grover",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "UCLA professor and former Stanford researcher",
+            "Co-inventor of Decision Transformers and researcher in generative modeling"
+          ]
+        },
+        {
+          "name": "Volodymyr Kuleshov",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Cornell professor",
+            "Researcher in generative modeling, trustworthy machine learning and AI for science"
+          ]
+        }
+      ],
+      "website": "https://www.inceptionlabs.ai/"
+    },
+    {
+      "id": "ndea",
+      "name": "Ndea",
+      "shortName": "Ndea",
+      "code": "NDE",
+      "formation": {
+        "time": "2024",
+        "insightId": "ndea.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "ndea-2025-launch",
+          "date": "2025-01-15",
+          "round": "undisclosed",
+          "amountRaisedUsd": null,
+          "valuationUsd": null,
+          "valuationType": "undisclosed",
+          "status": "not-publicly-disclosed",
+          "insightId": "ndea.funding.2025-launch"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 3,
+        "label": "high",
+        "rationale": "The program-synthesis thesis and founders are explicit, although financing remains undisclosed.",
+        "insightId": "ndea.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 0,
+          "rationale": "Research lab with no product disclosed."
+        },
+        "capability": {
+          "score": 2,
+          "rationale": "AGI is framed as efficient skill acquisition, with science automation as a major ambition."
+        },
+        "dataEfficiency": {
+          "score": 3,
+          "rationale": "Few-shot abstraction and the ARC lineage are the philosophical thesis."
+        },
+        "computeEfficiency": {
+          "score": 2,
+          "rationale": "Search is expensive, but synthesized programs are cheap to run once found."
+        },
+        "adaptivity": {
+          "score": 3,
+          "rationale": "Test-time adaptation to novel tasks is the goal."
+        },
+        "controllability": {
+          "score": 3,
+          "rationale": "Synthesized programs are intended to be human-readable and verifiable."
+        }
+      },
+      "note": "Combines deep learning with program synthesis to build systems that invent abstractions and adapt to genuinely novel problems, with ARC-AGI as a central measure of progress.",
+      "keywords": [
+        "program synthesis"
+      ],
+      "noteInsightId": "ndea.thesis",
+      "keyPeople": [
+        {
+          "name": "François Chollet",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Created Keras and ARC-AGI",
+            "Former Google engineer and author of “Deep Learning with Python”"
+          ]
+        },
+        {
+          "name": "Mike Knoop",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Co-founded Zapier and led product and engineering as President",
+            "Co-founded the ARC Prize Foundation"
+          ]
+        }
+      ],
+      "website": "https://ndea.com/"
+    },
+    {
+      "id": "thinking",
+      "name": "Thinking Machines Lab",
+      "shortName": "Thinking Machines",
+      "code": "TM",
+      "formation": {
+        "time": "2025.02",
+        "insightId": "thinking.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "thinking-2025-seed",
+          "date": "2025-07-15",
+          "round": "seed",
+          "amountRaisedUsd": 2000000000,
+          "valuationUsd": 12000000000,
+          "valuationType": "reported",
+          "status": "closed",
+          "insightId": "thinking.funding.2025-seed"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 3,
+        "label": "high",
+        "rationale": "Public product, leadership, financing and technical positioning are well documented.",
+        "insightId": "thinking.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 2,
+          "rationale": "Tinker fine-tuning API is live; there is no frontier consumer product yet."
+        },
+        "capability": {
+          "score": 3,
+          "rationale": "Frontier-lab ambitions and multimodal model work support a high target-capability score."
+        },
+        "dataEfficiency": {
+          "score": 2,
+          "rationale": "Customization leverages existing models, but the underlying training regime still needs substantial data."
+        },
+        "computeEfficiency": {
+          "score": 2,
+          "rationale": "Fine-tuning can be more efficient than pretraining for many uses; a broad efficiency lead is not demonstrated."
+        },
+        "adaptivity": {
+          "score": 2,
+          "rationale": "Per-user customization and weight adaptation are central to the product thesis."
+        },
+        "controllability": {
+          "score": 2,
+          "rationale": "Determinism, reproducibility, and steerability are explicit research and product focuses."
+        }
+      },
+      "note": "Builds frontier, customizable multimodal AI for human collaboration, pairing strong models with tools that let people adapt model weights and shape system behavior.",
+      "keywords": [
+        "customizable models"
+      ],
+      "noteInsightId": "thinking.thesis",
+      "keyPeople": [
+        {
+          "name": "Mira Murati",
+          "role": "CEO & Co-founder",
+          "pastExperiences": [
+            "Former CTO of OpenAI",
+            "Led product and research work spanning ChatGPT, DALL·E and frontier multimodal systems"
+          ]
+        },
+        {
+          "name": "Barret Zoph",
+          "role": "CTO & Co-founder",
+          "pastExperiences": [
+            "Former VP of Research (Post-Training) at OpenAI",
+            "Former Google Brain researcher known for neural architecture search"
+          ]
+        },
+        {
+          "name": "John Schulman",
+          "role": "Chief Scientist & Co-founder",
+          "pastExperiences": [
+            "Co-founded OpenAI and led reinforcement-learning research including PPO",
+            "Former researcher at Anthropic"
+          ]
+        }
+      ],
+      "website": "https://thinkingmachines.ai/"
+    },
+    {
+      "id": "ami",
+      "name": "AMI Labs",
+      "shortName": "AMI",
+      "code": "AMI",
+      "formation": {
+        "time": "2025.12",
+        "insightId": "ami.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "ami-2026-seed",
+          "date": "2026-03-10",
+          "round": "seed",
+          "amountRaisedUsd": 1030000000,
+          "valuationUsd": 3500000000,
+          "valuationType": "pre-money",
+          "status": "closed",
+          "insightId": "ami.funding.2026-seed"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 2,
+        "label": "moderate",
+        "rationale": "Mission, founders and financing are public; the lab is young and detailed technical execution remains limited.",
+        "insightId": "ami.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 0,
+          "rationale": "Explicitly a research organization; no saleable product is expected on the near-term horizon."
+        },
+        "capability": {
+          "score": 3,
+          "rationale": "The thesis targets human-level intelligence through persistent memory, reasoning, and planning."
+        },
+        "dataEfficiency": {
+          "score": 2,
+          "rationale": "JEPA-style representations avoid pixel-level prediction and emphasize abstract learning from observation."
+        },
+        "computeEfficiency": {
+          "score": 2,
+          "rationale": "Modular, objective-driven world models are pitched as more efficient than generative alternatives."
+        },
+        "adaptivity": {
+          "score": 3,
+          "rationale": "Persistent memory and domain-specific world models are designed to update from experience."
+        },
+        "controllability": {
+          "score": 2,
+          "rationale": "Modular objectives and learned dynamics are pitched as controllable by construction, though unproven."
+        }
+      },
+      "note": "Bets that action-conditioned world models—not language prediction alone—are the path to reasoning, planning, persistent memory and controllable real-world intelligence.",
+      "keywords": [
+        "world models"
+      ],
+      "noteInsightId": "ami.thesis",
+      "keyPeople": [
+        {
+          "name": "Yann LeCun",
+          "role": "Executive Chairman & Co-founder",
+          "pastExperiences": [
+            "Former Chief AI Scientist at Meta",
+            "NYU professor, Bell Labs alumnus and 2018 Turing Award laureate"
+          ]
+        },
+        {
+          "name": "Alex LeBrun",
+          "role": "CEO",
+          "pastExperiences": [
+            "Co-founded and led healthcare AI company Nabla",
+            "Founded Wit.ai, acquired by Facebook"
+          ]
+        }
+      ],
+      "website": "https://amilabs.xyz/"
+    },
+    {
+      "id": "recursive",
+      "name": "Recursive Superintelligence",
+      "shortName": "Recursive SI",
+      "code": "RSI",
+      "formation": {
+        "time": "2025.12",
+        "insightId": "recursive.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "recursive-2026-round",
+          "date": "2026-05-13",
+          "round": "private",
+          "amountRaisedUsd": 650000000,
+          "valuationUsd": 4650000000,
+          "valuationType": "post-money",
+          "status": "closed",
+          "insightId": "recursive.funding.2026-round"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 2,
+        "label": "moderate",
+        "rationale": "Team, financing and high-level research direction are public; detailed methods and evidence remain early.",
+        "insightId": "recursive.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 0,
+          "rationale": "No flagship output is disclosed; the direction is automated self-improvement of AI pipelines."
+        },
+        "capability": {
+          "score": 3,
+          "rationale": "The thesis is to automate ideation, implementation, and validation so AI can improve itself."
+        },
+        "dataEfficiency": {
+          "score": 2,
+          "rationale": "Self-generated tasks and evolutionary populations reduce reliance on curated human data."
+        },
+        "computeEfficiency": {
+          "score": 1,
+          "rationale": "Open-ended search over populations is compute-voracious."
+        },
+        "adaptivity": {
+          "score": 3,
+          "rationale": "Self-modification and recursive improvement are the product thesis."
+        },
+        "controllability": {
+          "score": 1,
+          "rationale": "Recursive self-improvement is the canonical hard-to-control regime, with the loop designed to exclude humans."
+        }
+      },
+      "note": "Aims to automate AI research through open-ended algorithms and recursive self-improvement, then apply the same compounding discovery loop across scientific fields.",
+      "keywords": [
+        "recursive self-improvement"
+      ],
+      "noteInsightId": "recursive.thesis",
+      "keyPeople": [
+        {
+          "name": "Richard Socher",
+          "role": "CEO & Co-founder",
+          "pastExperiences": [
+            "Former Chief Scientist at Salesforce after founding MetaMind",
+            "Founder of You.com and former Stanford NLP researcher"
+          ]
+        },
+        {
+          "name": "Tim Rocktäschel",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Formerly led open-endedness and self-improvement research at Google DeepMind",
+            "Professor at University College London"
+          ]
+        },
+        {
+          "name": "Jeff Clune",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Former research leader at OpenAI and Uber AI Labs",
+            "Professor known for open-ended algorithms and AI-generating algorithms"
+          ]
+        },
+        {
+          "name": "Tim Shi",
+          "role": "Co-founder",
+          "pastExperiences": [
+            "Co-founded Cresta",
+            "Early team member at OpenAI"
+          ]
+        }
+      ],
+      "website": "https://www.recursive.com/"
+    },
+    {
+      "id": "ineffable",
+      "name": "Ineffable Intelligence",
+      "shortName": "Ineffable",
+      "code": "INE",
+      "formation": {
+        "time": "2025",
+        "insightId": "ineffable.formation"
+      },
+      "fundingHistory": [
+        {
+          "id": "ineffable-2026-seed",
+          "date": "2026-04-27",
+          "round": "seed",
+          "amountRaisedUsd": 1100000000,
+          "valuationUsd": 5100000000,
+          "valuationType": "reported",
+          "status": "closed",
+          "insightId": "ineffable.funding.2026-seed"
+        }
+      ],
+      "disclosureConfidence": {
+        "score": 1,
+        "label": "limited",
+        "rationale": "The learning thesis and financing are public, while implementation details and technical artifacts remain limited.",
+        "insightId": "ineffable.disclosure"
+      },
+      "scores": {
+        "readiness": {
+          "score": 0,
+          "rationale": "Pre-product; the lab is building reinforcement-learning infrastructure with Nvidia."
+        },
+        "capability": {
+          "score": 3,
+          "rationale": "The stated goal is a superlearner that discovers knowledge beyond human data."
+        },
+        "dataEfficiency": {
+          "score": 3,
+          "rationale": "It aims to use little or no human-data pretraining, trading it for experience generated through self-play."
+        },
+        "computeEfficiency": {
+          "score": 1,
+          "rationale": "Online act-observe-update loops are compute- and interconnect-intensive."
+        },
+        "adaptivity": {
+          "score": 3,
+          "rationale": "Continual learning from experience is the core thesis."
+        },
+        "controllability": {
+          "score": 1,
+          "rationale": "Reward specification and reward hacking remain unresolved at the proposed capability level."
+        }
+      },
+      "note": "Pursues a continually learning “superlearner” that discovers knowledge from experience through large-scale reinforcement learning rather than relying on human-generated data.",
+      "keywords": [
+        "reinforcement learning"
+      ],
+      "noteInsightId": "ineffable.thesis",
+      "keyPeople": [
+        {
+          "name": "David Silver",
+          "role": "Founder & CEO",
+          "pastExperiences": [
+            "Led AlphaGo, AlphaZero and reinforcement-learning research at Google DeepMind",
+            "Professor at University College London"
+          ]
+        }
+      ],
+      "website": "https://www.ineffable.ai/"
     }
   ],
   "sources": {

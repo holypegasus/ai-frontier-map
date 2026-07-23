@@ -231,40 +231,6 @@
     };
   }
 
-  function createDelayedTooltip() {
-    const tooltip = document.createElement('div');
-    tooltip.className = 'axis-hover-tooltip';
-    tooltip.setAttribute('role', 'tooltip');
-    document.body.appendChild(tooltip);
-    let timer = null;
-    function position(event) {
-      tooltip.style.left = `${event.clientX + 14}px`;
-      tooltip.style.top = `${event.clientY + 14}px`;
-    }
-    function hide() {
-      window.clearTimeout(timer);
-      timer = null;
-      tooltip.classList.remove('is-visible');
-    }
-    function bind(target, textForTarget) {
-      target.addEventListener('pointerenter', event => {
-        const text = typeof textForTarget === 'function' ? textForTarget() : textForTarget;
-        if (!text) return;
-        position(event);
-        window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-          tooltip.textContent = text;
-          tooltip.classList.add('is-visible');
-          position(event);
-        }, 500);
-      });
-      target.addEventListener('pointermove', position);
-      target.addEventListener('pointerleave', hide);
-      target.addEventListener('pointerdown', hide);
-    }
-    return { bind, hide };
-  }
-
   const architectureMetrics = Object.fromEntries(Object.entries(dataset.schema?.analysisAxes || {}).map(([key, metric]) => [key, {
     label: metric.label,
     description: metric.hoverText
@@ -276,6 +242,8 @@
     const stage = query('#architecture-stage');
     const detail = query('#architecture-detail');
     const detailClose = query('#architecture-detail-close');
+    const xAxisSelect = query('#space-x-axis');
+    const yAxisSelect = query('#space-y-axis');
     const starLegend = query('.star-legend');
     const spaceHeader = query('body[data-page="space"] .site-header');
     const spaceLastUpdated = query('.space-last-updated');
@@ -287,8 +255,10 @@
     const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const precisePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const starGroups = new Map();
+    const starRadii = new Map();
     const orbitBodies = new Map();
     const nebulaTrails = new Map();
+    const metricKeys = Object.keys(architectureMetrics);
     const orbitTilt = 0.64;
     const perspectiveStrength = 0.16;
     let selectedId = labs.some(lab => lab.id === initialFocus) ? initialFocus : labs[0]?.id;
@@ -305,16 +275,78 @@
     let detailHovered = false;
     let hoverCloseTimer = null;
     let chromeHideTimer = null;
+    let lastPointerX = Number.POSITIVE_INFINITY;
     let lastPointerY = Number.POSITIVE_INFINITY;
+    let axisConfig = { x: null, y: null };
+    let gridLayer = null;
+    let gridPositions = new Map();
+    let gridClusters = new Map();
+    let layoutTimer = null;
+    let gridMotionFrame = null;
+    let lastGridMotionTime = 0;
+    let gridClusterAngles = new Map();
 
     const params = new URLSearchParams(window.location.search);
-    const hadLegacyAxes = ['x', 'y', 'view'].some(key => params.has(key));
-    ['x', 'y', 'view'].forEach(key => params.delete(key));
-    if (hadLegacyAxes) {
+    const requestedX = metricKeys.includes(params.get('x')) ? params.get('x') : null;
+    const requestedY = metricKeys.includes(params.get('y')) ? params.get('y') : null;
+    const requestedGrid = params.get('view') === 'grid' && requestedX && requestedY;
+    if (requestedGrid) {
+      axisConfig = { x: requestedX, y: requestedY };
+    } else if (params.has('x') || params.has('y') || params.has('view')) {
+      params.delete('x');
+      params.delete('y');
+      params.delete('view');
       const cleanQuery = params.toString();
       window.history.replaceState(null, '', `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}${window.location.hash}`);
     }
     updateViewLinks(ids, selectedId);
+
+    function populateAxisSelect(select, axis) {
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Metric to compare…';
+      select.appendChild(placeholder);
+      metricKeys.forEach(key => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = architectureMetrics[key].label;
+        select.appendChild(option);
+      });
+      select.value = axisConfig[axis] || '';
+    }
+
+    populateAxisSelect(xAxisSelect, 'x');
+    populateAxisSelect(yAxisSelect, 'y');
+
+    function syncAxisSelectOptions() {
+      const xValue = xAxisSelect.value;
+      const yValue = yAxisSelect.value;
+      [...xAxisSelect.options].forEach(option => {
+        option.disabled = Boolean(option.value && option.value === yValue);
+      });
+      [...yAxisSelect.options].forEach(option => {
+        option.disabled = Boolean(option.value && option.value === xValue);
+      });
+      xAxisSelect.classList.toggle('is-awaiting-selection', Boolean(yValue && !xValue));
+      yAxisSelect.classList.toggle('is-awaiting-selection', Boolean(xValue && !yValue));
+    }
+
+    if (xAxisSelect.value && xAxisSelect.value === yAxisSelect.value) {
+      yAxisSelect.value = '';
+      axisConfig.y = null;
+    }
+    syncAxisSelectOptions();
+
+    function openPendingAxisSelect(select) {
+      if (!select || select.value) return;
+      select.focus({ preventScroll: true });
+      if (typeof select.showPicker !== 'function') return;
+      try {
+        select.showPicker();
+      } catch {
+        // Browsers can reject showPicker when the user activation has expired.
+      }
+    }
 
     function hash(text) {
       let value = 2166136261;
@@ -360,6 +392,10 @@
       return spaceChromeParts.some(part => part.matches(':hover') || part.contains(document.activeElement));
     }
 
+    function isChromeEdge(x, y) {
+      return x <= 110 || y <= 110 || y >= window.innerHeight - 110;
+    }
+
     function revealChrome() {
       clearChromeHide();
       document.body.classList.add('space-chrome-visible');
@@ -370,7 +406,7 @@
       clearChromeHide();
       chromeHideTimer = window.setTimeout(() => {
         chromeHideTimer = null;
-        if (lastPointerY <= 110 || chromeIsActive()) return;
+        if (isChromeEdge(lastPointerX, lastPointerY) || chromeIsActive()) return;
         document.body.classList.remove('space-chrome-visible');
       }, delay);
     }
@@ -383,11 +419,13 @@
       part.addEventListener('focusout', () => scheduleChromeHide(500));
     });
     window.addEventListener('pointermove', event => {
+      lastPointerX = event.clientX;
       lastPointerY = event.clientY;
-      if (event.clientY <= 110) revealChrome();
+      if (isChromeEdge(event.clientX, event.clientY)) revealChrome();
       else if (document.body.classList.contains('space-chrome-visible') && !chromeIsActive()) scheduleChromeHide();
     }, { passive: true });
     window.addEventListener('pointerleave', () => {
+      lastPointerX = Number.POSITIVE_INFINITY;
       lastPointerY = Number.POSITIVE_INFINITY;
       scheduleChromeHide(500);
     });
@@ -410,6 +448,204 @@
     });
     stage.addEventListener('click', event => {
       if (!event.target.closest('.star-point') && !event.target.closest('.star-detail')) closeDetail();
+    });
+
+    function gridIsActive() {
+      return Boolean(axisConfig.x && axisConfig.y);
+    }
+
+    function syncViewQuery() {
+      const nextParams = new URLSearchParams(window.location.search);
+      if (gridIsActive()) {
+        nextParams.set('view', 'grid');
+        nextParams.set('x', axisConfig.x);
+        nextParams.set('y', axisConfig.y);
+      } else {
+        nextParams.delete('view');
+        nextParams.delete('x');
+        nextParams.delete('y');
+      }
+      const nextQuery = nextParams.toString();
+      window.history.replaceState(null, '', `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}${window.location.hash}`);
+    }
+
+    function gridBounds() {
+      const compact = width < 700;
+      const horizontalInset = compact ? Math.max(160, width * .48) : Math.max(205, width * .16);
+      return {
+        left: horizontalInset,
+        right: width - (compact ? 24 : horizontalInset),
+        top: Math.max(compact ? 110 : 80, height * .11),
+        bottom: height - (compact ? 100 : 32)
+      };
+    }
+
+    function gridPlanePoint(point) {
+      const verticalDepth = (point.y - center.y) / Math.max(1, height / 2);
+      return {
+        x: center.x + (point.x - center.x) * (1 + verticalDepth * 0.08),
+        y: center.y + (point.y - center.y) * orbitTilt
+      };
+    }
+
+    function gridPosition(lab) {
+      const bounds = gridBounds();
+      return gridPlanePoint({
+        x: bounds.left + analysisScore(lab, axisConfig.x) / 3 * (bounds.right - bounds.left),
+        y: bounds.bottom - analysisScore(lab, axisConfig.y) / 3 * (bounds.bottom - bounds.top)
+      });
+    }
+
+    function configureGrid() {
+      gridPositions = new Map(labs.map(lab => [lab.id, gridPosition(lab)]));
+      gridClusters = new Map();
+      labs.forEach(lab => {
+        const key = `${analysisScore(lab, axisConfig.x)}|${analysisScore(lab, axisConfig.y)}`;
+        if (!gridClusters.has(key)) gridClusters.set(key, []);
+        gridClusters.get(key).push(lab.id);
+      });
+      gridClusters.forEach(idsAtPoint => idsAtPoint.sort((a, b) => a.localeCompare(b)));
+      gridClusterAngles = new Map([...gridClusters.keys()].map(key => [key, 0]));
+    }
+
+    function clusterSpreadRadius(idsAtPoint) {
+      const count = idsAtPoint.length;
+      const minimumAdjacentSpacing = idsAtPoint.reduce((largest, id, index) => {
+        const nextId = idsAtPoint[(index + 1) % count];
+        const spacing = (starRadii.get(id) || 18) + (starRadii.get(nextId) || 18);
+        return Math.max(largest, spacing);
+      }, 0) + .5;
+      return Math.max(12, minimumAdjacentSpacing / (2 * Math.sin(Math.PI / count)));
+    }
+
+    function paintGridPositions() {
+      gridClusters.forEach((idsAtPoint, key) => {
+        const base = gridPositions.get(idsAtPoint[0]);
+        const radius = idsAtPoint.length > 1
+          ? clusterSpreadRadius(idsAtPoint)
+          : 0;
+        const phase = (hash(`${key}-cluster`) % 360) * Math.PI / 180 + (gridClusterAngles.get(key) || 0);
+        idsAtPoint.forEach((id, index) => {
+          const angle = phase + index * Math.PI * 2 / idsAtPoint.length;
+          const position = {
+            x: base.x + Math.cos(angle) * radius,
+            y: base.y + Math.sin(angle) * radius
+          };
+          const group = starGroups.get(id);
+          group?.setAttribute('transform', `translate(${position.x} ${position.y}) scale(1)`);
+          if (group) group.style.opacity = '1';
+        });
+      });
+      if (detailOpen) positionDetail();
+    }
+
+    function stepGridMotion(now) {
+      const dt = lastGridMotionTime ? Math.min(0.04, (now - lastGridMotionTime) / 1000) : 0;
+      lastGridMotionTime = now;
+      gridClusters.forEach((idsAtPoint, key) => {
+        if (detailOpen && idsAtPoint.includes(selectedId)) return;
+        gridClusterAngles.set(key, ((gridClusterAngles.get(key) || 0) + dt * 0.05) % (Math.PI * 2));
+      });
+      paintGridPositions();
+      gridMotionFrame = window.requestAnimationFrame(stepGridMotion);
+    }
+
+    function startGridMotion() {
+      if (reducedMotion || gridMotionFrame || !gridIsActive()) return;
+      lastGridMotionTime = 0;
+      gridMotionFrame = window.requestAnimationFrame(stepGridMotion);
+    }
+
+    function stopGridMotion() {
+      if (gridMotionFrame) window.cancelAnimationFrame(gridMotionFrame);
+      gridMotionFrame = null;
+      lastGridMotionTime = 0;
+    }
+
+    function renderGrid() {
+      if (!gridLayer) return;
+      gridLayer.replaceChildren();
+      if (!gridIsActive()) return;
+      configureGrid();
+      const bounds = gridBounds();
+      for (let score = 0; score <= 3; score += 1) {
+        const rawX = bounds.left + score / 3 * (bounds.right - bounds.left);
+        const rawY = bounds.bottom - score / 3 * (bounds.bottom - bounds.top);
+        const verticalTop = gridPlanePoint({ x: rawX, y: bounds.top });
+        const verticalBottom = gridPlanePoint({ x: rawX, y: bounds.bottom });
+        const horizontalLeft = gridPlanePoint({ x: bounds.left, y: rawY });
+        const horizontalRight = gridPlanePoint({ x: bounds.right, y: rawY });
+        gridLayer.append(
+          svgEl('line', { x1: verticalTop.x, y1: verticalTop.y, x2: verticalBottom.x, y2: verticalBottom.y, class: `space-grid-line${score === 0 ? ' is-axis' : ''}` }),
+          svgEl('line', { x1: horizontalLeft.x, y1: horizontalLeft.y, x2: horizontalRight.x, y2: horizontalRight.y, class: `space-grid-line${score === 0 ? ' is-axis' : ''}` })
+        );
+        const xTickPoint = gridPlanePoint({ x: rawX, y: bounds.bottom + 36 });
+        const yTickPoint = gridPlanePoint({ x: bounds.left - 32, y: rawY });
+        if (score === 0 || score === 3) {
+          const endpointLabel = score === 0 ? 'None' : 'High';
+          const xTick = svgEl('text', { x: xTickPoint.x, y: xTickPoint.y, 'text-anchor': 'middle', class: 'space-grid-tick' });
+          xTick.textContent = endpointLabel;
+          const yTick = svgEl('text', { x: yTickPoint.x, y: yTickPoint.y + 4, 'text-anchor': 'middle', class: 'space-grid-tick' });
+          yTick.textContent = endpointLabel;
+          gridLayer.append(xTick, yTick);
+        }
+      }
+      gridClusters.forEach((idsAtPoint) => {
+        if (idsAtPoint.length < 2) return;
+        const base = gridPositions.get(idsAtPoint[0]);
+        gridLayer.appendChild(svgEl('circle', {
+          cx: base.x,
+          cy: base.y,
+          r: clusterSpreadRadius(idsAtPoint),
+          class: 'space-cluster-ring'
+        }));
+      });
+    }
+
+    function finishLayoutTransition(callback) {
+      if (layoutTimer) window.clearTimeout(layoutTimer);
+      const delay = reducedMotion ? 0 : 840;
+      layoutTimer = window.setTimeout(() => {
+        layoutTimer = null;
+        stage.classList.remove('is-layout-transitioning');
+        callback?.();
+      }, delay);
+    }
+
+    function updateAxisView() {
+      syncViewQuery();
+      document.body.classList.toggle('space-grid-view', gridIsActive());
+      stage.classList.add('is-layout-transitioning');
+      if (gridIsActive()) {
+        stopMotion();
+        stopGridMotion();
+        renderGrid();
+        stage.dataset.view = 'grid';
+        svg.setAttribute('aria-label', `${labs.length} neolabs plotted by ${architectureMetrics[axisConfig.x].label} and ${architectureMetrics[axisConfig.y].label}`);
+        window.requestAnimationFrame(paintGridPositions);
+        finishLayoutTransition(startGridMotion);
+      } else {
+        stopGridMotion();
+        stage.dataset.view = 'orbits';
+        svg.setAttribute('aria-label', 'All neolabs orbiting one center; older labs are nearer the center and newer labs are nearer the edge');
+        paintPositions();
+        finishLayoutTransition(() => {
+          if (!reducedMotion && !gridIsActive()) motionFrame = window.requestAnimationFrame(stepMotion);
+        });
+      }
+    }
+
+    xAxisSelect.addEventListener('change', () => {
+      axisConfig.x = xAxisSelect.value || null;
+      syncAxisSelectOptions();
+      updateAxisView();
+      if (axisConfig.x && !axisConfig.y) openPendingAxisSelect(yAxisSelect);
+    });
+    yAxisSelect.addEventListener('change', () => {
+      axisConfig.y = yAxisSelect.value || null;
+      syncAxisSelectOptions();
+      updateAxisView();
+      if (axisConfig.y && !axisConfig.x) openPendingAxisSelect(xAxisSelect);
     });
 
     function configureOrbits() {
@@ -476,6 +712,7 @@
     }
 
     function paintPositions() {
+      if (gridIsActive()) return;
       orbitBodies.forEach((body, id) => {
         const position = positionFor(body);
         const depth = Math.sin(body.angle);
@@ -525,6 +762,7 @@
       svg.setAttribute('aria-label', 'All neolabs orbiting one center; older labs are nearer the center and newer labs are nearer the edge');
       svg.replaceChildren();
       starGroups.clear();
+      starRadii.clear();
       nebulaTrails.clear();
 
       const defs = svgEl('defs');
@@ -576,6 +814,9 @@
       }
       svg.append(backgroundFar, backgroundNear);
 
+      gridLayer = svgEl('g', { class: 'space-grid', 'aria-hidden': 'true' });
+      svg.appendChild(gridLayer);
+
       configureOrbits();
       const outerOrbitRadius = Math.max(...[...orbitBodies.values()].map(body => body.radius));
       const galacticLayer = svgEl('g', { class: 'galactic-nebula', 'aria-hidden': 'true' });
@@ -624,6 +865,7 @@
         const haloRadius = radius + 5 + 20 * Math.sqrt(funding.latestValuation / maxValuation);
         const body = orbitBodies.get(lab.id);
         const confidence = disclosureScore(lab);
+        starRadii.set(lab.id, haloRadius + 3);
         const outer = svgEl('g', {
           class: `star-point confidence-${confidence}${lab.id === selectedId ? ' is-selected' : ''}`,
           'data-lab': lab.id,
@@ -643,9 +885,6 @@
         label.textContent = lab.name;
         starShape.appendChild(label);
         outer.appendChild(starShape);
-        const title = svgEl('title');
-        title.textContent = `${lab.name}; formed ${lab.formation?.time || 'unknown'}; raised ${formatUsd(funding.totalRaised)}; latest valuation ${formatUsd(funding.latestValuation)}; ${disclosureLabel(lab).toLowerCase()} disclosure confidence`;
-        outer.appendChild(title);
         outer.addEventListener('click', event => {
           event.stopPropagation();
           pinLab(lab.id);
@@ -660,9 +899,19 @@
         svg.appendChild(outer);
       });
 
-      paintPositions();
-      stage.dataset.view = 'orbits';
-      if (!reducedMotion) motionFrame = window.requestAnimationFrame(stepMotion);
+      if (gridIsActive()) {
+        renderGrid();
+        document.body.classList.add('space-grid-view');
+        stage.dataset.view = 'grid';
+        paintGridPositions();
+        startGridMotion();
+      } else {
+        stopGridMotion();
+        document.body.classList.remove('space-grid-view');
+        paintPositions();
+        stage.dataset.view = 'orbits';
+        if (!reducedMotion) motionFrame = window.requestAnimationFrame(stepMotion);
+      }
       if (detailOpen) window.requestAnimationFrame(positionDetail);
     }
 
@@ -905,7 +1154,8 @@
     const tableBody = query('#radar-lab-table-body');
     const workspace = query('.radar-workspace');
     const tableWrap = query('.radar-table-wrap');
-    const axisTooltip = createDelayedTooltip();
+    const fullTableButton = query('#radar-full-table-button');
+    const returnButton = query('#radar-return-button');
     query('#radar-cohort-label').textContent = `${labs.length} profiles shown`;
     const axes = Object.entries(architectureMetrics).map(([key, metric]) => ({
       key,
@@ -927,8 +1177,34 @@
     const initialFocus = readFocus(ids);
     let selectedId = labs.some(lab => lab.id === initialFocus) ? initialFocus : labs[0].id;
     let geometry;
-    let selectedAxisIndex = 0;
+    let selectedAxisIndex = null;
     let axisTableExpanded = false;
+    let fullTableShown = false;
+    const rowsByLab = new Map();
+
+    function scoreBand(score) {
+      return ['N/A', 'low', 'mid', 'high'][Math.max(0, Math.min(3, Math.round(Number(score) || 0)))];
+    }
+
+    function renderHighlightedText(container, text, keywords = []) {
+      const terms = keywords.filter(Boolean).slice().sort((a, b) => b.length - a.length);
+      if (!terms.length) {
+        container.textContent = text;
+        return;
+      }
+      const pattern = new RegExp(`(${terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
+      text.split(pattern).forEach(part => {
+        if (!part) return;
+        if (terms.some(term => term.toLowerCase() === part.toLowerCase())) {
+          const mark = document.createElement('mark');
+          mark.className = 'radar-keyword';
+          mark.textContent = part;
+          container.appendChild(mark);
+        } else {
+          container.appendChild(document.createTextNode(part));
+        }
+      });
+    }
 
     function colorFor(lab) { return colors[labs.findIndex(item => item.id === lab.id) % colors.length]; }
     function activateLab(id) {
@@ -943,23 +1219,50 @@
         setActiveLab(selectedId);
       }
       selectedAxisIndex = index;
+      fullTableShown = false;
       axisTableExpanded = true;
       updateSelection();
       updateAria();
     }
     function collapseAxisTable() {
       axisTableExpanded = false;
+      fullTableShown = false;
       updateAxisTable();
       updateAria();
+    }
+
+    function showFullTable() {
+      axisTableExpanded = false;
+      fullTableShown = true;
+      updateAxisTable();
+      updateAria();
+    }
+
+    function selectAxisColumn(index) {
+      if (fullTableShown) {
+        selectedAxisIndex = index;
+        updateSelection();
+        updateAria();
+        return;
+      }
+      expandAxisTable(index);
     }
 
     const headerRow = tableWrap.querySelector('thead tr');
     axes.forEach((axis, index) => {
       const header = document.createElement('th');
       header.scope = 'col';
-      header.className = 'radar-axis-column';
+      header.className = 'radar-axis-column radar-sort-header';
       header.dataset.axis = String(index);
       header.textContent = axis.label;
+      header.tabIndex = 0;
+      header.setAttribute('aria-label', `Sort by ${axis.label}, descending`);
+      header.addEventListener('click', () => selectAxisColumn(index));
+      header.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        selectAxisColumn(index);
+      });
       headerRow.appendChild(header);
     });
 
@@ -1006,29 +1309,26 @@
       noteCell.dataset.label = 'Thesis';
       const keywordText = document.createElement('div');
       keywordText.className = 'radar-keywords-text';
-      keywordText.textContent = Array.isArray(lab.keywords) && lab.keywords.length ? lab.keywords.join(', ') : lab.note;
+      const shortThesis = Array.isArray(lab.keywords) && lab.keywords.length ? lab.keywords.join(', ') : lab.note;
+      keywordText.textContent = shortThesis;
       noteCell.appendChild(keywordText);
-      const noteText = document.createElement('div');
-      noteText.className = 'radar-note-text';
-      noteText.textContent = lab.note;
-      noteCell.appendChild(noteText);
-      const noteCitations = document.createElement('div');
-      noteCitations.className = 'radar-citations';
-      renderCitations(noteCitations, insightIdsForLab(lab));
-      noteCell.appendChild(noteCitations);
+      const longThesis = document.createElement('div');
+      longThesis.className = 'radar-long-thesis';
+      renderHighlightedText(longThesis, lab.note, Array.isArray(lab.keywords) ? lab.keywords : []);
+      noteCell.appendChild(longThesis);
       row.appendChild(noteCell);
       axes.forEach((axis, index) => {
         const axisCell = document.createElement('td');
         axisCell.className = 'radar-axis-column';
         axisCell.dataset.axis = String(index);
         axisCell.dataset.label = axis.label;
-        const score = document.createElement('strong');
-        score.className = 'radar-axis-score';
-        score.textContent = `${analysisScore(lab, axis.key)}/3`;
+        const scoreValue = analysisScore(lab, axis.key);
+        const level = scoreBand(scoreValue);
+        axisCell.classList.add(`radar-score-${level.toLowerCase().replace('/', '-')}`);
         const rationale = document.createElement('span');
         rationale.className = 'radar-axis-rationale';
         rationale.textContent = analysisRationale(lab, axis.key) || 'No public rationale';
-        axisCell.append(score, rationale);
+        axisCell.appendChild(rationale);
         row.appendChild(axisCell);
       });
 
@@ -1036,7 +1336,25 @@
         if (!event.target.closest('a')) activateLab(lab.id);
       });
       tableBody.appendChild(row);
+      rowsByLab.set(lab.id, row);
     });
+
+    function sortTableRows() {
+      const orderedLabs = (axisTableExpanded || fullTableShown) && selectedAxisIndex !== null
+        ? labs.slice().sort((a, b) => {
+          const scoreOrder = analysisScore(b, axes[selectedAxisIndex].key) - analysisScore(a, axes[selectedAxisIndex].key);
+          const aFormation = formationSortKey(a);
+          const bFormation = formationSortKey(b);
+          return scoreOrder
+            || bFormation.year - aFormation.year
+            || bFormation.month - aFormation.month
+            || a.name.localeCompare(b.name);
+        })
+        : labs;
+      const fragment = document.createDocumentFragment();
+      orderedLabs.forEach(lab => fragment.appendChild(rowsByLab.get(lab.id)));
+      tableBody.appendChild(fragment);
+    }
 
     function valuesFor(lab) { return axes.map(axis => analysisScore(lab, axis.key)); }
     function pointFor(index, value, radius = geometry.radius) {
@@ -1065,14 +1383,15 @@
       const label = svgEl('g', {
         transform: `translate(${x} ${y})`,
         class: 'radar-axis-label',
+        'data-axis': String(index),
         role: 'button',
+        'aria-pressed': String(index === selectedAxisIndex),
         'aria-label': `Show all axis scores and rationales; highlight ${axis.label}`
       });
       label.appendChild(svgEl('rect', { x: -labelWidth / 2, y: -labelHeight / 2, width: labelWidth, height: labelHeight, rx: 8, class: 'radar-axis-label-bg' }));
       const text = svgEl('text', { x: 0, y: 4, 'text-anchor': 'middle', class: 'radar-axis-label-text' });
       text.textContent = axis.label;
       label.appendChild(text);
-      axisTooltip.bind(label, axis.description);
       label.addEventListener('click', event => {
         event.stopPropagation();
         expandAxisTable(index);
@@ -1088,7 +1407,6 @@
       });
       vertex.appendChild(svgEl('circle', { cx: 0, cy: 0, r: 15, class: 'radar-axis-vertex-hit' }));
       vertex.appendChild(svgEl('circle', { cx: 0, cy: 0, r: 3.5, class: 'radar-axis-vertex-dot' }));
-      axisTooltip.bind(vertex, axis.description);
       vertex.addEventListener('click', event => {
         event.stopPropagation();
         expandAxisTable(index);
@@ -1140,13 +1458,12 @@
             cx: point.x,
             cy: point.y,
             r: 7,
-            class: `radar-profile-vertex${lab.id === selectedId ? ' is-selected' : ''}`,
+            class: 'radar-profile-vertex',
             'data-lab': lab.id,
             'data-axis': String(index),
-            'aria-label': `Show all axis scores and rationales; ${lab.name} ${axis.label} score ${score}`
+            'aria-label': `Show all axis scores and rationales; ${lab.name} ${axis.label} level ${scoreBand(score)}`
           });
           vertex.style.setProperty('--radar-color', colorFor(lab));
-          axisTooltip.bind(vertex, axis.description);
           vertex.addEventListener('click', event => {
             event.stopPropagation();
             expandAxisTable(index, lab.id);
@@ -1165,9 +1482,6 @@
       svg.querySelectorAll('.radar-lab-profile').forEach(profile => {
         profile.classList.toggle('is-selected', profile.dataset.lab === selectedId);
       });
-      svg.querySelectorAll('.radar-profile-vertex').forEach(vertex => {
-        vertex.classList.toggle('is-selected', vertex.dataset.lab === selectedId);
-      });
       tableBody.querySelectorAll('tr').forEach(row => {
         const isSelected = row.dataset.lab === selectedId;
         row.classList.toggle('is-selected', isSelected);
@@ -1179,23 +1493,51 @@
     }
 
     function updateAxisTable() {
-      workspace.classList.toggle('has-axis-table', axisTableExpanded);
-      tableWrap.classList.toggle('is-axis-expanded', axisTableExpanded);
+      workspace.classList.toggle('has-axis-table', fullTableShown);
+      workspace.classList.toggle('has-full-table', fullTableShown);
+      tableWrap.classList.toggle('is-axis-expanded', fullTableShown);
+      tableWrap.classList.toggle('is-axis-detail', axisTableExpanded);
+      tableWrap.classList.toggle('is-full-table', fullTableShown);
+      returnButton.hidden = !fullTableShown;
+      fullTableButton.hidden = fullTableShown;
+      fullTableButton.setAttribute('aria-pressed', String(fullTableShown));
+      fullTableButton.textContent = 'Show full table';
+      sortTableRows();
+      headerRow.querySelectorAll('.radar-axis-column').forEach(cell => {
+        if ((axisTableExpanded || fullTableShown) && selectedAxisIndex !== null && Number(cell.dataset.axis) === selectedAxisIndex) cell.setAttribute('aria-sort', 'descending');
+        else cell.removeAttribute('aria-sort');
+      });
       tableWrap.querySelectorAll('.radar-axis-column').forEach(cell => {
-        cell.classList.toggle('is-selected-axis', Number(cell.dataset.axis) === selectedAxisIndex);
+        const axisIndex = Number(cell.dataset.axis);
+        cell.classList.toggle('is-visible-axis', fullTableShown || (axisTableExpanded && selectedAxisIndex !== null && axisIndex === selectedAxisIndex));
+        cell.classList.toggle('is-selected-axis', selectedAxisIndex !== null && axisIndex === selectedAxisIndex);
+      });
+      svg.querySelectorAll('.radar-axis-label').forEach(label => {
+        const isSelected = selectedAxisIndex !== null && Number(label.dataset.axis) === selectedAxisIndex;
+        label.classList.toggle('is-selected-axis', isSelected);
+        label.setAttribute('aria-pressed', String(isSelected));
       });
     }
 
     function updateAria() {
       const lab = labById.get(selectedId);
       const axis = axes[selectedAxisIndex] || axes[0];
-      svg.setAttribute('aria-label', `Six-axis radar profiles for all ${labs.length} neolabs; highlighted profile: ${lab.name}${axisTableExpanded ? `; expanded score and rationale table with ${axis.label} highlighted` : ''}`);
+      const tableState = fullTableShown ? '; full score and rationale table shown' : axisTableExpanded && selectedAxisIndex !== null ? `; ${axis.label} score and rationale column shown` : '';
+      svg.setAttribute('aria-label', `Six-axis radar profiles for all ${labs.length} neolabs; highlighted profile: ${lab.name}${tableState}`);
     }
 
     const onResize = debounce(buildChart);
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', event => {
-      if (event.key === 'Escape' && axisTableExpanded) collapseAxisTable();
+      if (event.key === 'Escape' && (axisTableExpanded || fullTableShown)) collapseAxisTable();
+    });
+    fullTableButton.addEventListener('click', () => {
+      if (fullTableShown) collapseAxisTable();
+      else showFullTable();
+    });
+    returnButton.addEventListener('click', () => {
+      collapseAxisTable();
+      svg.focus({ preventScroll: true });
     });
     buildChart();
     updateAria();
@@ -1238,8 +1580,8 @@
       'color-mix(in srgb, var(--series-2) 55%, var(--series-5))'
     ];
     const colorFor = lab => colors[labs.findIndex(item => item.id === lab.id) % colors.length];
-    const COL_WIDTH = 216;
-    const COLUMN_GAP = 104;
+    const COL_WIDTH = 204;
+    const COLUMN_GAP = 92;
     const TOP = 116;
     const ROW_GAP = 64;
     const NODE_HEIGHT = 42;

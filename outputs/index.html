@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Stellar space map of AI neolabs.">
   <title>Space</title>
-  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="site.css?v=space-detail-layer">
 </head>
 <body data-page="space">
   <header class="site-header space-chrome">
@@ -18,6 +18,14 @@
   <main class="view-main architecture-main">
     <section id="architecture-stage" class="architecture-stage" data-view="orbits" aria-label="Neolabs in concentric formation-time orbits">
       <svg class="architecture-svg" role="img"></svg>
+      <div class="space-axis-controls" role="group" aria-label="Space grid axes">
+        <label class="space-axis-control-y">
+          <select id="space-y-axis" aria-label="Y axis"></select>
+        </label>
+        <label class="space-axis-control-x">
+          <select id="space-x-axis" aria-label="X axis"></select>
+        </label>
+      </div>
       <aside id="architecture-detail" class="star-detail" aria-live="polite" hidden>
         <button id="architecture-detail-close" class="star-detail-close" type="button" aria-label="Close lab details">×</button>
         <div id="architecture-confidence" class="star-detail-kicker"></div>
@@ -38,9 +46,9 @@
         <div id="architecture-funding" class="funding-table-wrap"></div>
       </aside>
       <div class="star-legend" aria-label="Space map legend">
-        <span><i class="star-key star-key-core"></i>Core · known amount raised</span>
+        <span><i class="star-key star-key-core"></i>Core · amount raised</span>
         <span><i class="star-key star-key-halo"></i>Halo · latest valuation</span>
-        <span><i class="star-age-scale"></i>Older center · newer edge</span>
+        <span><i class="star-age-scale"></i>Older · newer</span>
         <span><i class="star-key star-key-gas"></i>Diffusivity · disclosure confidence</span>
       </div>
       <p class="source-note last-updated space-last-updated" data-last-updated></p>
@@ -49,6 +57,6 @@
   </main>
   <script src="neolabs-data.js"></script>
   <script src="tech-web-data.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=space-detail-layer"></script>
 </body>
 </html>

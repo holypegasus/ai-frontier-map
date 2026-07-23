@@ -4,7 +4,7 @@ window.TECH_WEB_DATA = Object.freeze({
     { id: 'architecture', number: '02', label: 'Architecture', sublabel: 'the substrate of intelligence' },
     { id: 'learning', number: '03', label: 'Learning loop', sublabel: 'how capability compounds' },
     { id: 'deployment', number: '04', label: 'Deployment surface', sublabel: 'where it meets the world' },
-    { id: 'implication', number: '05', label: 'Business / econo-socio-political implication', sublabel: 'the consequences that compound' }
+    { id: 'implication', number: '05', label: 'Business / econo-socio-political implication', sublabel: 'potential consequences' }
   ],
   nodes: [
     { id: 'd_text', layer: 'data', label: 'Web text & code' },
@@ -13,7 +13,6 @@ window.TECH_WEB_DATA = Object.freeze({
     { id: 'd_3d', layer: 'data', label: '3D & spatial capture' },
     { id: 'd_models', layer: 'data', label: 'Existing model weights' },
     { id: 'd_exp', layer: 'data', label: 'Self-generated experience' },
-    { id: 'd_tasks', layer: 'data', label: 'Sparse task specs' },
     { id: 'd_unk', layer: 'data', label: 'Undisclosed', unknown: true },
 
     { id: 'a_ar', layer: 'architecture', label: 'Autoregressive transformer' },
@@ -45,12 +44,10 @@ window.TECH_WEB_DATA = Object.freeze({
     { id: 's_none', layer: 'deployment', label: 'No product until endgame', unknown: true },
 
     { id: 'i_labor', layer: 'implication', label: 'Cognitive-labor automation' },
-    { id: 'i_capital', layer: 'implication', label: 'Compute-capital concentration' },
     { id: 'i_cheap', layer: 'implication', label: 'Commodity intelligence' },
     { id: 'i_phys', layer: 'implication', label: 'Physical-economy automation' },
     { id: 'i_sci', layer: 'implication', label: 'Compounding R&D acceleration' },
     { id: 'i_gov', layer: 'implication', label: 'Alignment & governance stakes' },
-    { id: 'i_geo', layer: 'implication', label: 'Sovereign champion' }
   ],
   nodeExplainers: {
     d_text: 'Public web pages, books, research papers, and source code provide the broad language, factual associations, and reasoning patterns used to train general-purpose models. This is the enormous prior that lets a model converse, write, and program before it has learned a specific job or product workflow.',
@@ -59,7 +56,6 @@ window.TECH_WEB_DATA = Object.freeze({
     d_3d: 'Spatial scans and 3D captures provide geometry, depth, and navigable structure for models that operate in physical space. They give world-model builders a more explicit representation of objects, rooms, and viewpoints than a flat image alone can provide.',
     d_models: 'Existing model weights become the raw material for merging, distillation, or evolutionary search instead of starting from fresh pretraining data. This approach treats prior models as a capability library: useful behaviors can be combined, evaluated, and improved without reproducing the whole original training run.',
     d_exp: 'The system generates its own practice data by acting, evaluating outcomes, and collecting experience beyond human-curated corpora. The promise is a learning loop that can keep exploring difficult environments after the available human examples have been exhausted.',
-    d_tasks: 'Compact descriptions of desired tasks guide a system toward programs or behaviors without specifying every training example. The task specification acts as a target for search, allowing the system to propose and test many possible solutions against an explicit objective.',
     d_unk: 'The relevant source data is not publicly disclosed, so the route is shown as an explicit uncertainty. The map avoids filling that gap with a speculative assumption while still showing where undisclosed inputs would enter the system.',
     a_ar: 'An autoregressive transformer predicts the next token or action in sequence, scaling a flexible general-purpose modeling paradigm. Its strength is a single architecture that can be trained across language, code, and multimodal inputs, then adapted to many tasks through prompting and fine-tuning.',
     a_diff: 'A diffusion language model generates by progressively denoising a candidate output rather than producing one token strictly after another. That design can support more parallel generation, native infilling, and different speed-quality tradeoffs for long or structured outputs.',
@@ -87,12 +83,10 @@ window.TECH_WEB_DATA = Object.freeze({
     s_sci: 'A scientific discovery engine uses models to propose, test, and refine hypotheses or experiments. Its value comes from accelerating the full research loop—finding patterns, planning trials, interpreting results, and suggesting the next experiment—rather than only summarizing existing knowledge.',
     s_none: 'The route identifies no intermediate product because the intended value is reserved for a future end state. This is a strategic choice as much as a technical one: the organization is signaling that near-term commercialization is not the central proof point for the effort.',
     i_labor: 'Cognitive tasks become cheaper or more automated as systems handle more of the work traditionally done by people. The effect can range from assistance and faster throughput to a deeper redesign of roles, management, and the division of responsibility between workers and software.',
-    i_capital: 'The advantage shifts toward organizations that can finance, own, and operate the largest compute infrastructure. As model development becomes more capital intensive, access to chips, energy, data centers, and distribution can become as strategically important as the research itself.',
     i_cheap: 'Intelligence becomes abundant and low-cost enough to be embedded across products and routine decisions. When capable inference is inexpensive, competitive advantage may move away from having a model at all and toward proprietary context, distribution, trust, and execution.',
     i_phys: 'Automation moves beyond screens into factories, logistics, homes, and other parts of the physical economy. Progress here depends on more than a capable model: systems must operate reliably amid messy environments, safety requirements, hardware limits, and real-world variability.',
     i_sci: 'Faster hypothesis generation and experimentation create a compounding cycle of research and development. Better tools can improve the process that produces the next generation of tools, potentially affecting materials, biology, engineering, and the pace of innovation more broadly.',
     i_gov: 'More capable systems raise the stakes around control, safety, accountability, and the institutions that govern deployment. The central question is not only what a model can do, but who can direct it, audit it, set boundaries for it, and bear responsibility when it fails.',
-    i_geo: 'Frontier AI becomes a strategic asset that concentrates geopolitical leverage in the countries and firms that control it. Leadership can shape industrial capacity, standards, security relationships, and the terms on which other actors gain access to high-end intelligence infrastructure.'
   },
   labMeta: {
     openai: { tag: 'scaled LLM + RL, product-led' },
@@ -109,18 +103,18 @@ window.TECH_WEB_DATA = Object.freeze({
     ssi: { tag: 'straight shot to safe superintelligence' }
   },
   labEdges: {
-    openai: [['d_text', 'a_ar'], ['d_multi', 'a_ar'], ['a_ar', 'l_pretrain'], ['l_pretrain', 's_chat'], ['l_pretrain', 's_agents'], ['s_chat', 'i_labor'], ['s_agents', 'i_labor'], ['s_chat', 'i_capital']],
+    openai: [['d_text', 'a_ar'], ['d_multi', 'a_ar'], ['a_ar', 'l_pretrain'], ['l_pretrain', 's_chat'], ['l_pretrain', 's_agents'], ['s_chat', 'i_labor'], ['s_agents', 'i_labor']],
     anthropic: [['d_text', 'a_ar'], ['d_multi', 'a_ar'], ['a_ar', 'l_pretrain'], ['l_pretrain', 's_api'], ['l_pretrain', 's_agents'], ['s_agents', 'i_labor'], ['s_api', 'i_gov']],
-    sakana: [['d_models', 'a_evo'], ['a_evo', 'l_open'], ['l_open', 's_api'], ['l_open', 's_sci'], ['s_api', 'i_cheap'], ['s_api', 'i_geo'], ['s_sci', 'i_sci']],
+    sakana: [['d_models', 'a_evo'], ['a_evo', 'l_open'], ['l_open', 's_api'], ['l_open', 's_sci'], ['s_api', 'i_cheap'], ['s_sci', 'i_sci']],
     thinking: [['d_text', 'a_ar'], ['d_models', 'a_ar'], ['a_ar', 'l_finetune'], ['l_finetune', 's_api'], ['s_api', 'i_cheap'], ['s_api', 'i_labor']],
     liquid: [['d_multi', 'a_liquid'], ['a_liquid', 'l_pretrain'], ['l_pretrain', 's_edge'], ['s_edge', 'i_cheap'], ['s_edge', 'i_phys']],
     inception: [['d_text', 'a_diff'], ['a_diff', 'l_pretrain'], ['l_pretrain', 's_api'], ['s_api', 'i_cheap']],
     worldlabs: [['d_video', 'a_wm3d'], ['d_3d', 'a_wm3d'], ['a_wm3d', 'l_pretrain'], ['l_pretrain', 's_sim'], ['s_sim', 'i_phys'], ['s_sim', 'i_labor']],
-    ami: [['d_video', 'a_jepa'], ['a_jepa', 'l_plan'], ['l_plan', 's_robot'], ['l_plan', 's_api'], ['s_robot', 'i_phys'], ['s_api', 'i_geo']],
+    ami: [['d_video', 'a_jepa'], ['a_jepa', 'l_plan'], ['l_plan', 's_robot'], ['l_plan', 's_api'], ['s_robot', 'i_phys']],
     recursive: [['d_models', 'a_agent'], ['d_exp', 'a_agent'], ['a_agent', 'l_open'], ['l_open', 'l_self'], ['l_self', 's_sci'], ['s_sci', 'i_sci'], ['s_sci', 'i_gov']],
-    ineffable: [['d_exp', 'a_agent'], ['a_agent', 'l_rl'], ['l_rl', 's_sci'], ['s_sci', 'i_sci'], ['s_sci', 'i_geo']],
-    ndea: [['d_tasks', 'a_ps'], ['a_ps', 'l_tts'], ['l_tts', 's_sci'], ['l_tts', 's_api'], ['s_api', 'i_cheap'], ['s_sci', 'i_sci']],
-    ssi: [['d_unk', 'a_unk'], ['a_unk', 'l_unk'], ['l_unk', 's_none'], ['s_none', 'i_gov'], ['s_none', 'i_capital']]
+    ineffable: [['d_exp', 'a_agent'], ['a_agent', 'l_rl'], ['l_rl', 's_sci'], ['s_sci', 'i_sci']],
+    ndea: [['d_models', 'a_ps'], ['a_ps', 'l_tts'], ['l_tts', 's_sci'], ['l_tts', 's_api'], ['s_api', 'i_cheap'], ['s_sci', 'i_sci']],
+    ssi: [['d_unk', 'a_unk'], ['a_unk', 'l_unk'], ['l_unk', 's_none'], ['s_none', 'i_gov']]
   },
   labNarratives: {
     openai: 'The incumbent mainline: internet-scale text and multimodal data into autoregressive transformers, refined by the static pretrain-then-RLHF loop, deployed as the largest consumer assistant and a growing agentic layer.',
