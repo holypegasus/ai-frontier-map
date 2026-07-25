@@ -1606,7 +1606,6 @@
       returnButton.hidden = !fullTableShown;
       fullTableButton.hidden = fullTableShown;
       fullTableButton.setAttribute('aria-pressed', String(fullTableShown));
-      fullTableButton.textContent = 'Show full table';
       sortTableRows();
       headerRow.querySelectorAll('.radar-axis-column').forEach(cell => {
         if ((axisTableExpanded || fullTableShown) && selectedAxisIndex !== null && Number(cell.dataset.axis) === selectedAxisIndex) cell.setAttribute('aria-sort', 'descending');
@@ -1634,6 +1633,11 @@
     const onResize = debounce(buildChart);
     window.addEventListener('resize', onResize);
     window.addEventListener('keydown', event => {
+      if ((event.key === 'f' || event.key === 'F') && !event.metaKey && !event.ctrlKey && !event.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        event.preventDefault();
+        if (!fullTableShown) showFullTable();
+        return;
+      }
       if (event.key === 'Escape' && (axisTableExpanded || fullTableShown)) collapseAxisTable();
     });
     fullTableButton.addEventListener('click', () => {

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Six-axis radar profiles for AI neolabs.">
   <title>Radar Profiles</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='54' font-size='54'%3E%F0%9F%93%A1%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="site.css?v=radar-axis-selection-state">
 </head>
 <body data-page="radar">
@@ -17,16 +18,17 @@
   </header>
   <main class="view-main radar-main">
     <div class="radar-workspace">
+      <div class="radar-table-heading">
+        <span class="radar-mode-switch">
+          <button id="radar-full-table-button" class="button radar-full-table-button" type="button" aria-label="Show full table (F)" aria-keyshortcuts="F" aria-controls="radar-lab-table-body" aria-pressed="false" title="Show full table (F)"><kbd>F</kbd><span>Show full table</span></button>
+          <button id="radar-return-button" class="button radar-return-button" type="button" aria-label="Return to Radar view" aria-controls="radar-svg"><kbd>Esc</kbd><span>Radar View</span></button>
+        </span>
+      </div>
       <section class="radar-chart-column" aria-label="Radar comparison">
         <div class="radar-plot"><svg id="radar-svg" class="radar-svg" role="img" tabindex="-1"></svg></div>
         <div class="legend radar-legend"><span id="radar-cohort-label" class="muted"></span><span><i id="radar-selected-swatch" class="legend-line solid-line"></i><span>Highlight: <span id="radar-selected-label"></span></span></span></div>
       </section>
-      <section class="radar-table-wrap" aria-labelledby="radar-table-title">
-        <div class="radar-table-heading">
-          <h2 id="radar-table-title">Lab profiles</h2>
-          <button id="radar-full-table-button" class="button radar-full-table-button" type="button" aria-controls="radar-lab-table-body" aria-pressed="false">Show full table</button>
-          <button id="radar-return-button" class="button radar-return-button" type="button" aria-label="Return to Radar view" aria-controls="radar-svg"><kbd>Esc</kbd><span>Radar View</span></button>
-        </div>
+      <section class="radar-table-wrap">
         <table class="radar-table">
           <thead><tr><th scope="col">Lab</th><th scope="col">Thesis</th></tr></thead>
           <tbody id="radar-lab-table-body"></tbody>
