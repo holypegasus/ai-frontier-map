@@ -242,6 +242,10 @@
     const stage = query('#architecture-stage');
     const detail = query('#architecture-detail');
     const detailClose = query('#architecture-detail-close');
+    const spaceSearch = query('[data-space-search]');
+    const spaceSearchForm = query('[data-space-search-form]');
+    const spaceSearchInput = query('[data-space-search-input]');
+    const spaceSearchResults = query('[data-space-search-results]');
     const xAxisSelect = query('#space-x-axis');
     const yAxisSelect = query('#space-y-axis');
     const starLegend = query('.star-legend');
@@ -285,6 +289,7 @@
     let gridMotionFrame = null;
     let lastGridMotionTime = 0;
     let gridClusterAngles = new Map();
+    let searchActiveIndex = -1;
 
     const params = new URLSearchParams(window.location.search);
     const requestedX = metricKeys.includes(params.get('x')) ? params.get('x') : null;
@@ -300,6 +305,97 @@
       window.history.replaceState(null, '', `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}${window.location.hash}`);
     }
     updateViewLinks(ids, selectedId);
+
+    function revealSearch() {
+      spaceSearch.classList.add('space-search-visible');
+    }
+
+    function hideSearchIfInactive() {
+      window.setTimeout(() => {
+        if (spaceSearch.contains(document.activeElement) || document.body.classList.contains('space-chrome-visible')) return;
+        spaceSearch.classList.remove('space-search-visible');
+      }, 150);
+    }
+
+    function searchMatches(value) {
+      const term = value.trim().toLocaleLowerCase();
+      if (!term) return [];
+      return labs.filter(lab => [lab.name, lab.shortName].filter(Boolean).some(name => String(name).toLocaleLowerCase().includes(term))).slice(0, 8);
+    }
+
+    function renderSearchResults() {
+      const matches = searchMatches(spaceSearchInput.value);
+      searchActiveIndex = Math.min(searchActiveIndex, matches.length - 1);
+      spaceSearchResults.replaceChildren();
+      if (!spaceSearchInput.value.trim() || !matches.length) {
+        spaceSearchResults.hidden = true;
+        spaceSearchInput.setAttribute('aria-expanded', 'false');
+        spaceSearchInput.removeAttribute('aria-activedescendant');
+        return matches;
+      }
+      matches.forEach((lab, index) => {
+        const result = document.createElement('button');
+        result.type = 'button';
+        result.id = `space-search-result-${lab.id}`;
+        result.className = `space-search-result${index === searchActiveIndex ? ' is-active' : ''}`;
+        result.setAttribute('role', 'option');
+        result.setAttribute('aria-selected', String(index === searchActiveIndex));
+        const name = document.createElement('span');
+        name.textContent = lab.name;
+        const formation = document.createElement('small');
+        formation.textContent = lab.formation?.time || '';
+        result.append(name, formation);
+        result.addEventListener('click', event => {
+          event.stopPropagation();
+          chooseSearchResult(lab);
+        });
+        spaceSearchResults.appendChild(result);
+      });
+      spaceSearchResults.hidden = false;
+      spaceSearchInput.setAttribute('aria-expanded', 'true');
+      if (searchActiveIndex >= 0) spaceSearchInput.setAttribute('aria-activedescendant', matches[searchActiveIndex] ? `space-search-result-${matches[searchActiveIndex].id}` : '');
+      else spaceSearchInput.removeAttribute('aria-activedescendant');
+      return matches;
+    }
+
+    function chooseSearchResult(lab) {
+      spaceSearchInput.value = lab.name;
+      spaceSearchResults.hidden = true;
+      spaceSearchInput.setAttribute('aria-expanded', 'false');
+      pinLab(lab.id);
+      revealSearch();
+      spaceSearchInput.focus({ preventScroll: true });
+    }
+
+    spaceSearch.addEventListener('focusin', revealSearch);
+    spaceSearch.addEventListener('focusout', hideSearchIfInactive);
+    spaceSearchInput.addEventListener('input', () => {
+      searchActiveIndex = -1;
+      renderSearchResults();
+    });
+    spaceSearchForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const matches = searchMatches(spaceSearchInput.value);
+      const match = matches[Math.max(0, searchActiveIndex)] || matches[0];
+      if (match) chooseSearchResult(match);
+    });
+    spaceSearchInput.addEventListener('keydown', event => {
+      const matches = searchMatches(spaceSearchInput.value);
+      if (event.key === 'ArrowDown' && matches.length) {
+        event.preventDefault();
+        searchActiveIndex = (searchActiveIndex + 1) % matches.length;
+        renderSearchResults();
+      } else if (event.key === 'ArrowUp' && matches.length) {
+        event.preventDefault();
+        searchActiveIndex = (searchActiveIndex - 1 + matches.length) % matches.length;
+        renderSearchResults();
+      } else if (event.key === 'Escape') {
+        event.stopPropagation();
+        spaceSearchInput.value = '';
+        renderSearchResults();
+        spaceSearchInput.blur();
+      }
+    });
 
     function populateAxisSelect(select, axis) {
       const placeholder = document.createElement('option');
@@ -408,6 +504,7 @@
         chromeHideTimer = null;
         if (isChromeEdge(lastPointerX, lastPointerY) || chromeIsActive()) return;
         document.body.classList.remove('space-chrome-visible');
+        if (!spaceSearch.contains(document.activeElement)) spaceSearch.classList.remove('space-search-visible');
       }, delay);
     }
 
@@ -431,6 +528,14 @@
     });
     window.addEventListener('keydown', event => {
       if (event.key === 'Tab') revealChrome();
+      if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        event.preventDefault();
+        clearChromeHide();
+        document.body.classList.remove('space-chrome-visible');
+        revealSearch();
+        spaceSearchInput.focus({ preventScroll: true });
+        spaceSearchInput.select();
+      }
       if (event.key === 'Escape' && detailOpen) closeDetail();
     });
 

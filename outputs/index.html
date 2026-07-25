@@ -18,6 +18,15 @@
   <main class="view-main architecture-main">
     <section id="architecture-stage" class="architecture-stage" data-view="orbits" aria-label="Neolabs in concentric formation-time orbits">
       <svg class="architecture-svg" role="img"></svg>
+      <div class="space-search" data-space-search>
+        <form class="space-search-form" data-space-search-form role="search">
+          <label class="space-search-label" for="space-lab-search">Search labs</label>
+          <span class="space-search-icon" aria-hidden="true">⌕</span>
+          <input id="space-lab-search" class="space-search-input" data-space-search-input type="search" autocomplete="off" spellcheck="false" placeholder="Search labs…" aria-controls="space-lab-search-results" aria-expanded="false">
+          <kbd class="space-search-shortcut" aria-hidden="true">/</kbd>
+        </form>
+        <div id="space-lab-search-results" class="space-search-results" data-space-search-results role="listbox" aria-label="Matching labs" hidden></div>
+      </div>
       <div class="space-axis-controls" role="group" aria-label="Space grid axes">
         <label class="space-axis-control-y">
           <select id="space-y-axis" aria-label="Y axis"></select>

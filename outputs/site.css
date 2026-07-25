@@ -267,6 +267,40 @@ body[data-page="space"].space-chrome-visible .site-header {
 }
 body[data-page="space"] .view-nav a:hover,
 body[data-page="space"] .view-nav a.is-current { background: rgb(179 211 255 / 9%); }
+.space-search {
+  position: fixed;
+  top: 4.55rem;
+  left: 50%;
+  z-index: 20;
+  width: min(27rem, calc(100% - 2rem));
+  overflow: hidden;
+  border: 1px solid rgb(179 211 255 / 19%);
+  border-radius: 999px;
+  background: rgb(8 14 27 / 86%);
+  box-shadow: 0 12px 35px rgb(0 0 0 / 24%);
+  opacity: 0;
+  filter: blur(3px);
+  pointer-events: none;
+  transform: translateX(-50%) translateY(-8px);
+  transition: opacity 280ms ease, filter 280ms ease, transform 280ms ease, border-radius 160ms ease;
+  backdrop-filter: blur(16px) saturate(125%);
+}
+.space-search:has(.space-search-results:not([hidden])) { border-radius: 15px; }
+body[data-page="space"].space-chrome-visible .space-search,
+body[data-page="space"] .space-search.space-search-visible,
+.space-search:focus-within { opacity: 1; filter: none; pointer-events: auto; transform: translateX(-50%); }
+.space-search-form { position: relative; display: flex; min-height: 2.65rem; align-items: center; background: transparent; }
+.space-search-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.space-search-icon { margin-left: .82rem; color: var(--primary); font-size: 1.15rem; line-height: 1; }
+.space-search-input { min-width: 0; height: 2.55rem; flex: 1; padding: .45rem .65rem; border: 0; outline: 0; background: transparent; color: var(--foreground); font-size: .84rem; }
+.space-search-input::placeholder { color: var(--muted); }
+.space-search-shortcut { margin-right: .65rem; padding: .08rem .36rem; border: 1px solid rgb(179 211 255 / 22%); border-radius: 5px; color: var(--muted); font-size: .68rem; }
+.space-search-results { display: grid; max-height: min(18rem, 45vh); gap: .15rem; overflow: auto; padding: .35rem; border-top: 1px solid rgb(179 211 255 / 13%); background: transparent; }
+.space-search-results[hidden] { display: none; }
+.space-search-result { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: .75rem; padding: .48rem .6rem; border: 0; border-radius: 8px; background: transparent; color: var(--foreground); cursor: pointer; text-align: left; }
+.space-search-result:hover, .space-search-result.is-active { background: rgb(179 211 255 / 10%); }
+.space-search-result small { overflow: hidden; color: var(--muted); font-size: .68rem; text-overflow: ellipsis; white-space: nowrap; }
+body[data-page="space"].space-grid-view .space-search { opacity: 1; filter: none; pointer-events: auto; transform: translateX(-50%); }
 .space-axis-controls { position: absolute; inset: 0; z-index: 7; pointer-events: none; opacity: 0; filter: blur(3px); transition: opacity 280ms ease, filter 280ms ease; }
 body[data-page="space"].space-chrome-visible .space-axis-controls { opacity: 1; filter: none; }
 .space-axis-controls label { position: absolute; display: block; pointer-events: auto; }
@@ -435,9 +469,11 @@ body[data-page="space"].space-chrome-visible .space-chrome-cue { width: 6rem; op
 @media (hover: none), (pointer: coarse) {
   body[data-page="space"] .site-header,
   body[data-page="space"] .star-legend,
-  body[data-page="space"] .space-last-updated { opacity: 1; pointer-events: auto; filter: none; }
+  body[data-page="space"] .space-last-updated,
+  body[data-page="space"] .space-search { opacity: 1; pointer-events: auto; filter: none; }
   body[data-page="space"] .space-axis-controls { opacity: 1; filter: none; }
   body[data-page="space"] .site-header { transform: translate(-50%, 0); }
+  body[data-page="space"] .space-search { transform: translateX(-50%); }
   body[data-page="space"] .star-legend { transform: translateY(0); }
   body[data-page="space"] .space-last-updated { transform: translateY(0); }
   body[data-page="space"] .space-chrome-cue { display: none; }
@@ -612,7 +648,7 @@ body.has-web-selection .web-legend .web-lab-chip:not([aria-pressed="true"]) { op
   .map-card, .web-lab-chip, .web-route-edge, .web-route-node rect { transition: none; }
   .space-axis-controls select.is-awaiting-selection { animation: none; }
   .architecture-svg .background-star, .architecture-svg .star-nebula-filament { animation: none; }
-  body[data-page="space"] .site-header, .star-legend, .space-last-updated, .space-chrome-cue,
+  body[data-page="space"] .site-header, .space-search, .star-legend, .space-last-updated, .space-chrome-cue,
   .architecture-svg .galactic-nebula, .architecture-svg .system-orbits, .architecture-svg .nebula-trails,
   .architecture-svg .space-grid, .architecture-svg .star-point { transition: none !important; }
 }
